@@ -185,6 +185,17 @@ body.busy #controls{display:none}
   --c0:#c2457f; --c1:#c9962a; --c2:#3aa57c; --c3:#7d52cc; --c4:#d96b2a; --c5:#2f93bd; --c6:#a8823a; --c7:#c552a2;
   color-scheme:dark;
 }
+#marquee{display:none;position:absolute;inset:0;pointer-events:none;z-index:2}
+:root[data-vegas] #marquee{display:block}
+#marquee i{position:absolute;--bulb:radial-gradient(circle,#fffbe0 0 2.4px,#ffcc33 3.2px,rgba(255,180,40,.35) 4.5px,transparent 6.5px)}
+#marquee .t,#marquee .b{left:0;right:0;height:14px;background:var(--bulb) 0 50%/22px 14px repeat-x}
+#marquee .l,#marquee .r{top:0;bottom:0;width:14px;background:var(--bulb) 50% 0/14px 22px repeat-y}
+#marquee .t{top:0;animation:chaseX 1.1s linear infinite}
+#marquee .b{bottom:0;animation:chaseX 1.1s linear infinite reverse}
+#marquee .r{right:0;animation:chaseY 1.1s linear infinite}
+#marquee .l{left:0;animation:chaseY 1.1s linear infinite reverse}
+@keyframes chaseX{to{background-position:22px 50%}}
+@keyframes chaseY{to{background-position:50% 22px}}
 :root[data-vegas] #panel,:root[data-vegas] #clue{border:2px solid var(--gold);box-shadow:0 0 0 1px #000,0 0 26px rgba(255,200,60,.4)}
 :root[data-vegas] #panel h2,:root[data-vegas] #year{color:var(--gold);text-shadow:0 0 12px rgba(255,190,60,.55)}
 :root[data-vegas] .btn{background:linear-gradient(#ffe27a,#f0a81c);color:#2a1300;border-color:#ffd34d;font-weight:600;box-shadow:0 2px 0 #9a5a00}
@@ -234,8 +245,9 @@ html[data-motion="reduce"] .lever-ball,html[data-motion="reduce"] .lever-rod{tra
 @media (prefers-reduced-motion:reduce){.lever-ball,.lever-rod{transition:none!important;animation:none!important}}
 #spinsBtn{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;margin:8px 0 0 8px;padding:4px 12px;border-radius:999px;border:2px solid #ff4f9a;background:linear-gradient(#ff6aa8,#c8136a);color:#fff;font-weight:600;font-size:calc(15px*var(--ts));cursor:pointer;box-shadow:0 0 14px rgba(255,79,154,.6);vertical-align:top}
 #streak{display:inline-block;margin:8px 0 0 8px;color:#ffb347;font-weight:600;text-shadow:0 0 8px rgba(255,120,40,.7);font-size:calc(16px*var(--ts));vertical-align:top}
+html[data-motion="reduce"] #marquee i{animation:none}
 html[data-motion="reduce"] #vbanner.show{animation:none;opacity:1}
-@media (prefers-reduced-motion:reduce){#vbanner.show{animation:none;opacity:1}.reel.stopped{animation:none}}
+@media (prefers-reduced-motion:reduce){#marquee i{animation:none}#vbanner.show{animation:none;opacity:1}.reel.stopped{animation:none}}
 
 /* scoring notes, saves, settings, country panel, passport, lightbox */
 .note{background:var(--goldbg);border-left:3px solid var(--gold);padding:7px 10px;font-size:calc(15px*var(--ts));margin:0 0 12px;border-radius:2px;line-height:1.4}
@@ -297,6 +309,7 @@ html[data-motion="reduce"] #vbanner.show{animation:none;opacity:1}
   <div id="mapbox">
     <canvas id="map" aria-label="Map of the world's states in the selected year"></canvas>
     <div id="pins" aria-label="Discoveries on the map"></div>
+    <div id="marquee" aria-hidden="true"><i class="t"></i><i class="r"></i><i class="b"></i><i class="l"></i></div>
     <div id="plate">
       <h1>Atlas of Time</h1>
       <div id="year" aria-live="polite">3400<small>BCE</small></div>
