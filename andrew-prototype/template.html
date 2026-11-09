@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Worldmapping prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f3ebd8; --land:#ece2c9; --sea:#d3dfe1; --water:#a9bfc6; --border:#6f5f4c;
+  --ink:#3a3026; --ink-soft:#6d604f; --panel:rgba(247,241,226,.94); --rule:#c9b99c;
+  --accent:#8c3b2e; --label:#3a3026; --halo:rgba(243,235,216,.85);
+  --c0:#e7b6ae; --c1:#efd59c; --c2:#c3d6a8; --c3:#cbbbdc; --c4:#f2c79f; --c5:#acd0c5; --c6:#dfcaa3; --c7:#e4bdd1;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#1f1c18; --land:#2b2721; --sea:#1b2427; --water:#33464c; --border:#0f0d0b;
+    --ink:#eadfc8; --ink-soft:#b3a68f; --panel:rgba(32,29,25,.94); --rule:#4a4237;
+    --accent:#e09a7f; --label:#f1e6cf; --halo:rgba(20,18,15,.8);
+    --c0:#7d4f4a; --c1:#7d6a3f; --c2:#566a46; --c3:#5d5070; --c4:#82603f; --c5:#3f6a60; --c6:#6c5d42; --c7:#74506a;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#1f1c18; --land:#2b2721; --sea:#1b2427; --water:#33464c; --border:#0f0d0b;
+  --ink:#eadfc8; --ink-soft:#b3a68f; --panel:rgba(32,29,25,.94); --rule:#4a4237;
+  --accent:#e09a7f; --label:#f1e6cf; --halo:rgba(20,18,15,.8);
+  --c0:#7d4f4a; --c1:#7d6a3f; --c2:#566a46; --c3:#5d5070; --c4:#82603f; --c5:#3f6a60; --c6:#6c5d42; --c7:#74506a;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--paper);color:var(--ink);font-family:"EB Garamond",Garamond,"Times New Roman",serif;overflow:hidden;-webkit-tap-highlight-color:transparent}
+#wrap{position:relative;height:100%;display:flex;flex-direction:column}
+#mapbox{position:relative;flex:1;min-height:0}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab;display:block}
+canvas:active{cursor:grabbing}
+
+#plate{position:absolute;left:16px;top:12px;pointer-events:none;max-width:70%}
+#plate h1{margin:0;font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:15px;letter-spacing:.04em;color:var(--ink-soft)}
+#year{font-family:"IM Fell English",Georgia,serif;font-size:clamp(40px,8vw,68px);line-height:1;color:var(--ink);margin-top:2px;font-variant-numeric:oldstyle-nums}
+#year small{font-size:.42em;letter-spacing:.06em;margin-left:.2em;color:var(--ink-soft)}
+#status{font-style:italic;color:var(--ink-soft);font-size:15px;margin-top:4px}
+
+#bar{flex:none;background:var(--panel);border-top:1px solid var(--rule);padding:10px 14px 12px;display:flex;align-items:center;gap:10px}
+#bar button{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid var(--rule);background:transparent;color:var(--ink);font:500 20px/1 "EB Garamond",serif;cursor:pointer;display:grid;place-items:center}
+#bar button:hover{border-color:var(--ink-soft)}
+#bar button:focus-visible,#slider:focus-visible,#info a:focus-visible,#close:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#play.on{background:var(--ink);color:var(--paper)}
+#track{flex:1;min-width:0;position:relative}
+#slider{width:100%;margin:0;accent-color:var(--accent);height:28px}
+#ticks{position:relative;height:16px;font-size:12px;color:var(--ink-soft);font-variant-numeric:oldstyle-nums}
+#ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+@media (max-width:560px){
+  #bar{flex-wrap:wrap;justify-content:center;gap:8px 14px;padding:10px 16px 10px}
+  #track{order:-1;flex:1 0 100%}
+  #ticks span.minor{display:none}
+}
+
+#info{position:absolute;right:14px;top:14px;width:min(300px,calc(100% - 28px));background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:14px 16px 14px;box-shadow:0 6px 24px rgba(40,30,20,.15);display:none}
+#info.show{display:block}
+#info h2{margin:0 26px 4px 0;font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:24px;line-height:1.15}
+#info p{margin:0 0 10px;color:var(--ink-soft);font-size:16px;line-height:1.4}
+#info a{color:var(--accent);font-size:16px}
+#close{position:absolute;right:8px;top:8px;width:28px;height:28px;border:0;background:transparent;color:var(--ink-soft);font-size:22px;cursor:pointer;line-height:1}
+#swatch{display:inline-block;width:12px;height:12px;border:1px solid var(--border);margin-right:6px;vertical-align:-1px}
+#credit{position:absolute;right:10px;bottom:6px;font-size:11px;color:var(--ink-soft);font-style:italic;pointer-events:none}
+@media (max-width:560px){#info{top:auto;bottom:10px}#credit{display:none}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="mapbox">
+    <canvas id="map" aria-label="Map of the world's states in the selected year"></canvas>
+    <div id="plate">
+      <h1>Worldmapping</h1>
+      <div id="year">117<small>CE</small></div>
+      <div id="status">Loading borders…</div>
+    </div>
+    <div id="info" role="dialog" aria-live="polite">
+      <button id="close" aria-label="Close">×</button>
+      <h2 id="iname"></h2>
+      <p id="iyears"></p>
+      <a id="iwiki" target="_blank" rel="noopener">Read on Wikipedia</a>
+    </div>
+    <div id="credit">Borders: Cliopatria (Seshat), CC BY 4.0. Coastlines: Natural Earth.</div>
+  </div>
+  <div id="bar">
+    <button id="prev" aria-label="Previous border change">‹</button>
+    <button id="play" aria-label="Play border changes">▶</button>
+    <button id="next" aria-label="Next border change">›</button>
+    <div id="track">
+      <input id="slider" type="range" min="0" max="10000" step="1" aria-label="Year">
+      <div id="ticks"></div>
+    </div>
+  </div>
+</div>
+
+<script id="polities" type="application/json">__POLITIES__</script>
+<script id="landdata" type="application/json">__LAND__</script>
+<script>/* d3 v7.9.0, ISC licence, inlined so the page works offline */
+__D3__</script>
+<script>
+(function(){
+const YMIN=-3400, YMAX=2024, POW=2.4;
+const yearAt=t=>Math.round(YMAX-(YMAX-YMIN)*Math.pow(1-t,POW));
+const tAt=y=>1-Math.pow((YMAX-y)/(YMAX-YMIN),1/POW);
+const fmtYear=y=>y<0?[String(-y),'BCE']:[String(Math.max(1,y)),'CE'];
+const fmtFull=y=>{const [a,b]=fmtYear(y);return a+' '+b};
+
+const canvas=document.getElementById('map'), ctx=canvas.getContext('2d');
+const slider=document.getElementById('slider');
+const elYear=document.getElementById('year'), elStatus=document.getElementById('status');
+const info=document.getElementById('info');
+
+let W=0,H=0,DPR=1, transform=d3.zoomIdentity;
+let projection=d3.geoNaturalEarth1();
+let feats=[], names=[], wiki=[], colorIdx=[], span=[], land=null, sphere=null, grat=null;
+let active=[], year=117, changeYears=[], playing=null, selected=-1;
+let theme={}, first=true, Q=20;
+
+function readTheme(){
+  const cs=getComputedStyle(document.documentElement);
+  const g=k=>cs.getPropertyValue(k).trim();
+  theme={paper:g('--paper'),land:g('--land'),sea:g('--sea'),water:g('--water'),border:g('--border'),label:g('--label'),halo:g('--halo'),accent:g('--accent'),
+    pal:[0,1,2,3,4,5,6,7].map(i=>g('--c'+i))};
+}
+
+function decode(rings,q){
+  return rings.map(r=>{const out=[];let x=0,y=0;for(let i=0;i<r.length;i+=2){x+=r[i];y+=r[i+1];out.push([x/q,y/q])}
+    const a=out[0],b=out[out.length-1];if(a[0]!==b[0]||a[1]!==b[1])out.push([a[0],a[1]]);return out});
+}
+// rewind so d3's spherical polygons read as small areas (exterior clockwise in d3's convention)
+function fixWinding(geom){
+  geom.coordinates.forEach(poly=>{
+    if(d3.geoArea({type:'Polygon',coordinates:poly})>2*Math.PI) poly.forEach(r=>r.reverse());
+  });
+  return geom;
+}
+
+function load(){
+  const P=JSON.parse(document.getElementById('polities').textContent);
+  const L=JSON.parse(document.getElementById('landdata').textContent);
+  names=P.names.map(n=>n); wiki=P.wiki; colorIdx=P.color;
+  const q=P.q; Q=q;
+  span=names.map(()=>[Infinity,-Infinity]);
+  const cy=new Set();
+  feats=P.f.map(([n,a,b,polys])=>{
+    span[n][0]=Math.min(span[n][0],a); span[n][1]=Math.max(span[n][1],b);
+    cy.add(a); cy.add(b+1);
+    return {n,a,b,polys,geom:null,path:null,area:0,lab:null};
+  });
+  changeYears=[...cy].filter(y=>y>=YMIN&&y<=YMAX).sort((x,y)=>x-y);
+  land={type:'MultiPolygon',coordinates:L.map(p=>decode(p,q))};
+  fixWinding(land);
+  sphere={type:'Sphere'};
+  grat=d3.geoGraticule10();
+}
+
+function geomOf(f){
+  if(!f.geom){
+    const q=Q;
+    f.geom=fixWinding({type:'MultiPolygon',coordinates:f.polys.map(p=>decode(p,q))});
+    f.polys=null;
+  }
+  return f.geom;
+}
+function pathOf(f){
+  if(!f.path){
+    const g=geomOf(f), p=new Path2D();
+    d3.geoPath(projection,p)(g); f.path=p;
+    const gp=d3.geoPath(projection);
+    f.area=gp.area(g);
+    // label anchor: centroid of the largest part
+    let best=null,ba=-1;
+    for(const poly of g.coordinates){const part={type:'Polygon',coordinates:poly};const a=gp.area(part);if(a>ba){ba=a;best=part}}
+    const c=best?gp.centroid(best):[NaN,NaN];
+    f.lab=isFinite(c[0])?{x:c[0],y:c[1],a:ba}:null;
+  }
+  return f.path;
+}
+let landPath,spherePath,gratPath;
+function buildBase(){
+  landPath=new Path2D(); d3.geoPath(projection,landPath)(land);
+  spherePath=new Path2D(); d3.geoPath(projection,spherePath)(sphere);
+  gratPath=new Path2D(); d3.geoPath(projection,gratPath)(grat);
+}
+
+function resize(){
+  const r=canvas.getBoundingClientRect(); W=r.width; H=r.height; DPR=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=Math.round(W*DPR); canvas.height=Math.round(H*DPR);
+  projection=d3.geoNaturalEarth1().fitExtent([[12,12],[W-12,H-12]],sphere);
+  feats.forEach(f=>{f.path=null;f.lab=null});
+  buildBase(); zoom.translateExtent([[-W*0.5,-H*0.5],[W*1.5,H*1.5]]);
+  if(first){
+    first=false;
+    // open on the Roman world: frame the Old World from the Atlantic to China
+    const a=projection([-12,58]), b=projection([125,8]);
+    const k=Math.max(1,Math.min(W/(b[0]-a[0]),(H-140)/(b[1]-a[1]))*0.95);
+    if(k>1.15){
+      const cx=(a[0]+b[0])/2, cy=(a[1]+b[1])/2;
+      d3.select(canvas).call(zoom.transform,d3.zoomIdentity.translate(W/2-cx*k,H/2+30-cy*k).scale(k));
+    }
+  }
+  draw();
+}
+
+function setActive(){
+  active=feats.filter(f=>f.a<=year&&year<=f.b);
+  active.forEach(pathOf);
+  active.sort((x,y)=>y.area-x.area);
+}
+
+function draw(){
+  if(!landPath) return;
+  const k=transform.k;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.fillStyle=theme.paper; ctx.fillRect(0,0,W,H);
+  ctx.setTransform(DPR*k,0,0,DPR*k,DPR*transform.x,DPR*transform.y);
+  // sea
+  ctx.fillStyle=theme.sea; ctx.fill(spherePath);
+  ctx.save(); ctx.clip(spherePath);
+  ctx.strokeStyle=theme.water; ctx.globalAlpha=.35; ctx.lineWidth=.5/k; ctx.stroke(gratPath); ctx.globalAlpha=1;
+  // engraved waterlines along the coast
+  const sc=Math.min(1,W/1100)*Math.min(1.6,Math.sqrt(k));
+  const rings=[[11,.18],[8,.24],[5.5,.32],[3.2,.45]];
+  for(const [w,a] of rings){
+    ctx.globalAlpha=a; ctx.strokeStyle=theme.water; ctx.lineWidth=w*sc/k; ctx.stroke(landPath);
+    ctx.globalAlpha=1; ctx.strokeStyle=theme.sea; ctx.lineWidth=Math.max(.2,(w-1.1)*sc)/k; ctx.stroke(landPath);
+  }
+  ctx.restore();
+  ctx.fillStyle=theme.land; ctx.fill(landPath);
+  // states, clipped to land so ragged simplified edges stay on shore
+  ctx.save(); ctx.clip(landPath);
+  for(const f of active){
+    ctx.fillStyle=theme.pal[colorIdx[f.n]%8];
+    ctx.globalAlpha=f.n===selected?1:.92;
+    ctx.fill(f.path,'evenodd');
+  }
+  ctx.globalAlpha=1; ctx.strokeStyle=theme.border; ctx.lineWidth=.6/k; ctx.lineJoin='round';
+  for(const f of active) ctx.stroke(f.path);
+  if(selected>=0){ctx.strokeStyle=theme.accent;ctx.lineWidth=2/k;for(const f of active) if(f.n===selected) ctx.stroke(f.path)}
+  ctx.restore();
+  // coastline
+  ctx.strokeStyle=theme.border; ctx.globalAlpha=.7; ctx.lineWidth=.55/k; ctx.stroke(landPath); ctx.globalAlpha=1;
+  ctx.strokeStyle=theme.water; ctx.lineWidth=1/k; ctx.stroke(spherePath);
+  drawLabels();
+}
+
+function drawLabels(){
+  const k=transform.k;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  const placed=[], seen=new Set();
+  const cand=[];
+  for(const f of active){
+    if(!f.lab||seen.has(f.n)) continue; seen.add(f.n);
+    const sa=f.lab.a*k*k; if(sa<900) continue;
+    const x=transform.x+f.lab.x*k, y=transform.y+f.lab.y*k;
+    if(x<-50||y<-20||x>W+50||y>H+20) continue;
+    cand.push({f,x,y,sa});
+  }
+  cand.sort((a,b)=>b.sa-a.sa);
+  for(const c of cand){
+    const size=Math.max(9,Math.min(22,Math.sqrt(c.sa)/9));
+    const txt=names[c.f.n].toUpperCase();
+    ctx.font=`500 ${size}px "EB Garamond", Garamond, serif`;
+    if('letterSpacing' in ctx) ctx.letterSpacing=(size*.18).toFixed(1)+'px';
+    const w=ctx.measureText(txt).width, h=size*1.1;
+    if(w>Math.sqrt(c.sa)*3.4) continue;
+    const box=[c.x-w/2-2,c.y-h/2,c.x+w/2+2,c.y+h/2];
+    if(placed.some(b=>!(box[2]<b[0]||box[0]>b[2]||box[3]<b[1]||box[1]>b[3]))) continue;
+    placed.push(box);
+    ctx.lineWidth=3; ctx.strokeStyle=theme.halo; ctx.lineJoin='round'; ctx.strokeText(txt,c.x,c.y);
+    ctx.fillStyle=theme.label; ctx.fillText(txt,c.x,c.y);
+  }
+  if('letterSpacing' in ctx) ctx.letterSpacing='0px';
+}
+
+let raf=0; const redraw=()=>{if(!raf)raf=requestAnimationFrame(()=>{raf=0;draw()})};
+
+function setYear(y,fromSlider){
+  year=Math.max(YMIN,Math.min(YMAX,y));
+  const [a,b]=fmtYear(year); elYear.innerHTML=a+'<small>'+b+'</small>';
+  if(!fromSlider) slider.value=Math.round(tAt(year)*10000);
+  slider.setAttribute('aria-valuetext',fmtFull(year));
+  setActive();
+  elStatus.textContent=new Set(active.map(f=>f.n)).size+' states on the map';
+  if(selected>=0&&!active.some(f=>f.n===selected)) hideInfo();
+  redraw();
+}
+
+function step(dir){
+  let y;
+  if(dir>0) y=changeYears.find(c=>c>year);
+  else {for(let i=changeYears.length-1;i>=0;i--) if(changeYears[i]<year){y=changeYears[i];break}}
+  if(y!==undefined) setYear(y); else if(dir>0) stopPlay();
+}
+function stopPlay(){clearInterval(playing);playing=null;const b=document.getElementById('play');b.classList.remove('on');b.textContent='▶';b.setAttribute('aria-label','Play border changes')}
+function togglePlay(){
+  if(playing){stopPlay();return}
+  if(year>=YMAX) setYear(YMIN);
+  const b=document.getElementById('play'); b.classList.add('on'); b.textContent='❚❚'; b.setAttribute('aria-label','Pause');
+  playing=setInterval(()=>step(1),650);
+}
+
+function showInfo(n){
+  selected=n;
+  document.getElementById('iname').textContent=names[n];
+  const s=span[n];
+  document.getElementById('iyears').innerHTML='<span id="swatch" style="background:'+theme.pal[colorIdx[n]%8]+'"></span>On the map '+fmtFull(s[0])+' to '+fmtFull(s[1]);
+  const a=document.getElementById('iwiki');
+  if(wiki[n]){a.style.display='';a.href='https://en.wikipedia.org/wiki/'+encodeURIComponent(wiki[n].replace(/ /g,'_'))}else a.style.display='none';
+  info.classList.add('show'); redraw();
+}
+function hideInfo(){selected=-1;info.classList.remove('show');redraw()}
+
+canvas.addEventListener('click',e=>{
+  const r=canvas.getBoundingClientRect();
+  const [px,py]=transform.invert([e.clientX-r.left,e.clientY-r.top]);
+  ctx.setTransform(1,0,0,1,0,0);
+  let hit=-1;
+  for(let i=active.length-1;i>=0;i--){ if(ctx.isPointInPath(active[i].path,px,py,'evenodd')){hit=active[i].n;break} }
+  if(hit>=0) showInfo(hit); else hideInfo();
+});
+document.getElementById('close').onclick=hideInfo;
+document.getElementById('prev').onclick=()=>{stopPlay();step(-1)};
+document.getElementById('next').onclick=()=>{stopPlay();step(1)};
+document.getElementById('play').onclick=togglePlay;
+slider.addEventListener('input',()=>{stopPlay();setYear(yearAt(slider.value/10000),true)});
+document.addEventListener('keydown',e=>{
+  if(e.target===slider) return;
+  if(e.key==='ArrowRight'){stopPlay();step(1)} else if(e.key==='ArrowLeft'){stopPlay();step(-1)} else if(e.key==='Escape') hideInfo();
+});
+
+const zoom=d3.zoom().scaleExtent([1,40]).on('zoom',e=>{transform=e.transform;redraw()});
+d3.select(canvas).call(zoom).on('dblclick.zoom',null);
+
+function ticks(){
+  const el=document.getElementById('ticks'); el.innerHTML='';
+  [[-3000,'3000 BCE',0],[-1000,'1000 BCE',1],[1,'1 CE',0],[1000,'1000',1],[1500,'1500',0],[1900,'1900',1]].forEach(([y,l,m])=>{
+    const s=document.createElement('span'); s.style.left=(tAt(y)*100)+'%'; s.textContent=l; if(m)s.className='minor'; el.appendChild(s);
+  });
+}
+
+const mq=window.matchMedia('(prefers-color-scheme: dark)');
+mq.addEventListener&&mq.addEventListener('change',()=>{readTheme();redraw()});
+
+readTheme();
+setTimeout(()=>{
+  load(); ticks();
+  window.addEventListener('resize',resize);
+  resize();
+  setYear(117); draw();
+  if(document.fonts&&document.fonts.load) document.fonts.load('500 14px "EB Garamond"').then(redraw).catch(()=>{});
+},30);
+})();
+</script>
+</body>
+</html>
