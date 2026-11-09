@@ -1,0 +1,882 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Atlas of Time</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f3ebd8; --land:#ece2c9; --sea:#d3dfe1; --water:#a9bfc6; --border:#6f5f4c;
+  --ink:#3a3026; --ink-soft:#6d604f; --panel:rgba(247,241,226,.96); --rule:#c9b99c;
+  --accent:#8c3b2e; --label:#3a3026; --halo:rgba(243,235,216,.85);
+  --ok:#3f6b3a; --okbg:#dfe8d2; --bad:#9a3b2a; --badbg:#f1d9cf; --gold:#9a7424; --goldbg:#f1e3bf;
+  --c0:#e7b6ae; --c1:#efd59c; --c2:#c3d6a8; --c3:#cbbbdc; --c4:#f2c79f; --c5:#acd0c5; --c6:#dfcaa3; --c7:#e4bdd1;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#1f1c18; --land:#2b2721; --sea:#1b2427; --water:#33464c; --border:#0f0d0b;
+    --ink:#eadfc8; --ink-soft:#b3a68f; --panel:rgba(32,29,25,.96); --rule:#4a4237;
+    --accent:#e09a7f; --label:#f1e6cf; --halo:rgba(20,18,15,.8);
+    --ok:#9cc78f; --okbg:#2b3a26; --bad:#e8957f; --badbg:#46271f; --gold:#e2bd62; --goldbg:#3d321a;
+    --c0:#7d4f4a; --c1:#7d6a3f; --c2:#566a46; --c3:#5d5070; --c4:#82603f; --c5:#3f6a60; --c6:#6c5d42; --c7:#74506a;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#1f1c18; --land:#2b2721; --sea:#1b2427; --water:#33464c; --border:#0f0d0b;
+  --ink:#eadfc8; --ink-soft:#b3a68f; --panel:rgba(32,29,25,.96); --rule:#4a4237;
+  --accent:#e09a7f; --label:#f1e6cf; --halo:rgba(20,18,15,.8);
+  --ok:#9cc78f; --okbg:#2b3a26; --bad:#e8957f; --badbg:#46271f; --gold:#e2bd62; --goldbg:#3d321a;
+  --c0:#7d4f4a; --c1:#7d6a3f; --c2:#566a46; --c3:#5d5070; --c4:#82603f; --c5:#3f6a60; --c6:#6c5d42; --c7:#74506a;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font-family:"EB Garamond",Garamond,"Times New Roman",serif;overflow:hidden;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+#wrap{position:relative;height:100%;display:flex;flex-direction:column}
+#mapbox{position:relative;flex:1;min-height:0;overflow:hidden}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab;display:block}
+canvas:active{cursor:grabbing}
+body.picking canvas{cursor:crosshair}
+
+/* plate */
+#plate{position:absolute;left:16px;top:12px;pointer-events:none;max-width:60%}
+#plate h1{margin:0;font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:15px;letter-spacing:.04em;color:var(--ink-soft)}
+#year{font-family:"IM Fell English",Georgia,serif;font-size:clamp(38px,7vw,64px);line-height:1;color:var(--ink);margin-top:2px;font-variant-numeric:oldstyle-nums}
+#year small{font-size:.42em;letter-spacing:.06em;margin-left:.2em;color:var(--ink-soft)}
+#sub{font-style:italic;color:var(--ink-soft);font-size:15px;margin-top:4px;line-height:1.3}
+#insight{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:3px 12px 3px 9px;border-radius:999px;background:var(--goldbg);color:var(--gold);border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);font-weight:600;font-size:16px;font-variant-numeric:lining-nums tabular-nums;position:relative}
+#insight .gain{position:absolute;left:100%;margin-left:8px;white-space:nowrap;opacity:0;font-weight:600}
+#insight .gain.go{animation:rise 1.6s ease-out}
+@keyframes rise{0%{opacity:0;transform:translateY(6px)}15%{opacity:1}100%{opacity:0;transform:translateY(-18px)}}
+
+/* top-right controls */
+#controls{position:absolute;right:12px;top:12px;display:flex;gap:8px;align-items:center;z-index:3}
+.seg{display:flex;border:1px solid var(--rule);border-radius:999px;background:var(--panel);overflow:hidden}
+.seg button{border:0;background:transparent;padding:7px 13px;font-size:15px;cursor:pointer;color:var(--ink-soft)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.ctl{border:1px solid var(--rule);background:var(--panel);border-radius:999px;padding:7px 13px;font-size:15px;cursor:pointer}
+.ctl:hover,.seg button:hover{border-color:var(--ink-soft)}
+
+/* pins */
+#pins{position:absolute;inset:0;pointer-events:none;z-index:1}
+.pin{position:absolute;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;border:2px solid var(--paper);background:var(--accent);color:var(--paper);font-size:15px;line-height:1;display:grid;place-items:center;cursor:pointer;pointer-events:auto;box-shadow:0 1px 6px rgba(30,20,10,.35);padding:0}
+.pin::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--paper)}
+.pin[data-state="done"]{background:var(--ok)}
+.pin[data-state="done"]::before{content:"✓";width:auto;height:auto;background:none;font-weight:700}
+.pin[data-state="seen"]{background:color-mix(in srgb,var(--accent) 70%,var(--ink-soft))}
+.pin[data-state="free"]{background:var(--ink-soft)}
+.pin[data-state="new"]::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid var(--accent);animation:pulse 1.8s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.6);opacity:.9}100%{transform:scale(1.35);opacity:0}}
+@media (prefers-reduced-motion:reduce){.pin[data-state="new"]::after{animation:none;opacity:.6}#insight .gain.go{animation:none;opacity:1}}
+
+/* side panel */
+#panel{position:absolute;right:12px;top:62px;bottom:12px;width:min(380px,calc(100% - 24px));background:var(--panel);border:1px solid var(--rule);border-radius:4px;box-shadow:0 8px 28px rgba(40,30,20,.18);display:none;flex-direction:column;z-index:4}
+#panel.show{display:flex}
+#panel .scroll{overflow:auto;padding:16px 18px 18px;flex:1}
+#pclose{position:absolute;right:6px;top:6px;width:32px;height:32px;border:0;background:transparent;color:var(--ink-soft);font-size:24px;cursor:pointer;line-height:1;z-index:1}
+#panel h2{margin:0 30px 2px 0;font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:26px;line-height:1.12}
+#panel h3{margin:18px 0 8px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+#panel p{margin:0 0 12px;font-size:17px;line-height:1.45}
+.kicker{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 30px 6px 0}
+.date{color:var(--ink-soft);font-style:italic;font-size:16px;margin-bottom:10px}
+.draft{display:inline-block;font-size:13px;padding:2px 8px;border:1px dashed var(--ink-soft);border-radius:3px;color:var(--ink-soft);margin:0 0 12px}
+.muted{color:var(--ink-soft)}
+.sources{font-size:15px;color:var(--ink-soft);margin:14px 0 0;padding:10px 0 0;border-top:1px solid var(--rule)}
+.sources a{color:var(--accent)}
+.sources ul{margin:4px 0 0;padding-left:18px}
+.back{border:0;background:none;color:var(--accent);padding:0;margin:0 0 10px;cursor:pointer;font-size:15px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--ink);background:var(--ink);color:var(--paper);border-radius:999px;padding:9px 18px;font-size:16px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--rule)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.chlist{display:flex;flex-direction:column;gap:8px}
+.ch{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid var(--rule);background:transparent;border-radius:4px;padding:10px 12px;cursor:pointer;font-size:16px}
+.ch:hover{border-color:var(--ink-soft)}
+.ch .cr{font-size:14px;color:var(--gold);font-weight:600;white-space:nowrap}
+.ch.done .cr{color:var(--ok)}
+.claims{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.claim{display:flex;gap:10px;text-align:left;border:1px solid var(--rule);background:transparent;border-radius:4px;padding:10px 12px;cursor:pointer;font-size:17px;line-height:1.35}
+.claim:hover:not(:disabled){border-color:var(--ink-soft)}
+.claim:disabled{cursor:default}
+.claim .letter{flex:none;width:24px;height:24px;border-radius:50%;border:1px solid var(--ink-soft);display:grid;place-items:center;font-size:14px;font-weight:600}
+.claim.lie{background:var(--badbg);border-color:var(--bad)}
+.claim.true{background:var(--okbg);border-color:var(--ok)}
+.claim.picked{box-shadow:0 0 0 2px var(--ink) inset}
+.verdict{font-weight:600;font-size:18px;margin:10px 0 6px}
+.verdict.good{color:var(--ok)} .verdict.bad{color:var(--bad)}
+.reward{display:inline-block;background:var(--goldbg);color:var(--gold);font-weight:600;border-radius:999px;padding:2px 10px;font-size:15px}
+.jl{display:flex;flex-direction:column;gap:6px}
+.jl button{display:flex;justify-content:space-between;gap:10px;align-items:baseline;text-align:left;border:1px solid var(--rule);background:transparent;border-radius:4px;padding:8px 10px;cursor:pointer;font-size:16px}
+.jl button span:last-child{font-size:14px;color:var(--ink-soft);white-space:nowrap}
+.jl button.done span:last-child{color:var(--ok)}
+.jl button.new span:last-child{color:var(--accent);font-weight:600}
+.meter{height:6px;background:var(--rule);border-radius:3px;overflow:hidden;margin:6px 0 2px}
+.meter i{display:block;height:100%;background:var(--gold)}
+.guess{margin:14px 0 4px}
+.guess input{width:100%;accent-color:var(--accent);height:28px}
+.guessyear{font-family:"IM Fell English",Georgia,serif;font-size:34px;text-align:center;font-variant-numeric:oldstyle-nums}
+.score{font-family:"IM Fell English",Georgia,serif;font-size:30px}
+.newlist{display:flex;flex-direction:column;gap:6px;margin:6px 0 10px}
+.newlist button{text-align:left;border:1px solid var(--rule);background:transparent;border-radius:4px;padding:8px 10px;cursor:pointer;font-size:16px}
+.newlist button small{display:block;color:var(--ink-soft);font-size:14px}
+#swatch{display:inline-block;width:12px;height:12px;border:1px solid var(--border);margin-right:6px;vertical-align:-1px}
+
+/* clue bar (Map Detective) */
+body.busy #controls{display:none}
+#clue{position:absolute;right:12px;top:12px;width:min(480px,calc(100% - 24px));background:var(--panel);border:1px solid var(--rule);border-radius:4px;box-shadow:0 8px 28px rgba(40,30,20,.18);padding:12px 14px;z-index:4}
+#clue p{margin:4px 0 8px;font-size:17px;line-height:1.4}
+#clue .fb{font-style:italic;color:var(--ink-soft);min-height:1.3em;margin:4px 0 6px}
+#clue .fb.bad{color:var(--bad);font-style:normal}
+#clue .hintlist{margin:0 0 6px;padding-left:18px;color:var(--ink-soft);font-size:16px}
+#clue .row{margin-top:6px}
+#clue .btn{padding:6px 14px;font-size:15px}
+#clue .choices{display:flex;flex-direction:column;gap:6px;margin:6px 0}
+#clue .choices button{text-align:left;border:1px solid var(--rule);background:transparent;border-radius:4px;padding:7px 10px;cursor:pointer;font-size:16px}
+
+/* bottom bars */
+.bar{flex:none;background:var(--panel);border-top:1px solid var(--rule);padding:10px 14px 12px;display:flex;align-items:center;gap:10px}
+.bar .round{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid var(--rule);background:transparent;font:500 20px/1 "EB Garamond",serif;cursor:pointer;display:grid;place-items:center}
+#play.on{background:var(--ink);color:var(--paper)}
+#track{flex:1;min-width:0;position:relative}
+#slider{width:100%;margin:0;accent-color:var(--accent);height:28px}
+#ticks{position:relative;height:16px;font-size:12px;color:var(--ink-soft);font-variant-numeric:oldstyle-nums}
+#ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+#cptrack{flex:1;min-width:0;display:flex;align-items:center;gap:0;overflow-x:auto;padding:2px 0}
+.cp{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:transparent;cursor:pointer;padding:2px 6px;min-width:76px}
+.cp .dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--ink-soft);background:var(--paper)}
+.cp .lab{font-size:14px;font-variant-numeric:oldstyle-nums;white-space:nowrap}
+.cp .cost{font-size:12px;color:var(--ink-soft);white-space:nowrap}
+.cp.unlocked .dot{background:var(--ink-soft)}
+.cp.current .dot{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent)}
+.cp.locked{cursor:default}
+.cp.locked .lab{color:var(--ink-soft)}
+.cpline{flex:1;min-width:16px;height:2px;background:var(--rule);margin-bottom:24px}
+.cpline.on{background:var(--ink-soft)}
+#advance{flex:none}
+#advance .cost{font-size:14px;opacity:.85}
+
+/* overlays */
+#toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:999px;font-size:16px;z-index:6;max-width:calc(100% - 32px);text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+#intro{position:absolute;inset:0;z-index:8;display:grid;place-items:center;background:color-mix(in srgb,var(--paper) 55%,transparent);padding:16px}
+#intro .card{background:var(--panel);border:1px solid var(--rule);border-radius:4px;box-shadow:0 12px 40px rgba(40,30,20,.25);max-width:460px;padding:24px 26px}
+#intro h2{margin:0 0 4px;font-family:"IM Fell English",Georgia,serif;font-weight:400;font-size:34px}
+#intro p{font-size:17px;line-height:1.45;margin:8px 0}
+#intro ol{font-size:17px;line-height:1.5;padding-left:22px;margin:10px 0 14px}
+#credit{position:absolute;left:10px;bottom:6px;font-size:11px;color:var(--ink-soft);font-style:italic;pointer-events:none}
+
+@media (max-width:560px){
+  #plate{max-width:55%}
+  #plate h1{font-size:13px}
+  #sub{font-size:14px}
+  #controls{top:10px;right:10px;flex-direction:column;align-items:flex-end;gap:6px}
+  .seg button,.ctl{padding:6px 11px;font-size:14px}
+  #panel{top:auto;bottom:10px;left:10px;right:10px;width:auto;max-height:62%}
+  #freebar{flex-wrap:wrap;justify-content:center;gap:8px 14px;padding:10px 16px}
+  #freebar #track{order:-1;flex:1 0 100%}
+  #ticks span.minor{display:none}
+  #advbar{flex-wrap:wrap;justify-content:center;gap:8px}
+  #advbar #cptrack{flex:1 0 100%}
+  #credit{display:none}
+  body.busy #plate{display:none}
+  #clue{top:10px}
+}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="mapbox">
+    <canvas id="map" aria-label="Map of the world's states in the selected year"></canvas>
+    <div id="pins" aria-label="Discoveries on the map"></div>
+    <div id="plate">
+      <h1>Atlas of Time</h1>
+      <div id="year" aria-live="polite">3400<small>BCE</small></div>
+      <div id="sub">Loading…</div>
+      <div id="insight" hidden title="Insight: earn it from challenges, spend it to unlock time"><span aria-hidden="true">✦</span><span id="insightN">0</span><span class="sr">&nbsp;Insight</span><span class="gain" id="gain"></span></div>
+    </div>
+    <div id="controls">
+      <div class="seg" role="group" aria-label="Mode">
+        <button id="mAdv" aria-pressed="true">Adventure</button>
+        <button id="mFree" aria-pressed="false">Free roam</button>
+      </div>
+      <button class="ctl" id="journalBtn">Journal</button>
+    </div>
+    <div id="clue" hidden role="region" aria-label="Map Detective"></div>
+    <div id="panel" role="dialog" aria-modal="false" aria-labelledby="ptitle">
+      <button id="pclose" aria-label="Close">×</button>
+      <div class="scroll" id="pbody"></div>
+    </div>
+    <div id="toast" hidden role="status"></div>
+    <div id="credit">Borders: Cliopatria (Seshat), CC BY 4.0. Coastlines: Natural Earth.</div>
+    <div id="intro" hidden>
+      <div class="card" role="dialog" aria-labelledby="introT">
+        <h2 id="introT">Atlas of Time</h2>
+        <p>Start in 3400 BCE, when the first cities and the first writing appear, and unlock history one step at a time.</p>
+        <ol>
+          <li><b>Explore</b> the glowing pins on the map.</li>
+          <li><b>Play challenges</b> to earn ✦ Insight. You earn some even when you're wrong.</li>
+          <li><b>Spend Insight</b> to move time forward and watch the world change.</li>
+        </ol>
+        <p class="muted" style="font-size:15px">This is a prototype. The stories and questions are drafts that still need fact-checking.</p>
+        <div class="row">
+          <button class="btn" id="introStart">Begin in 3400 BCE</button>
+          <button class="btn ghost" id="introFree">Free roam</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="bar" id="advbar">
+    <div id="cptrack" role="group" aria-label="Checkpoints"></div>
+    <button class="btn" id="advance"></button>
+  </div>
+  <div class="bar" id="freebar" hidden>
+    <button class="round" id="prev" aria-label="Previous border change">‹</button>
+    <button class="round" id="play" aria-label="Play border changes">▶</button>
+    <button class="round" id="next" aria-label="Next border change">›</button>
+    <div id="track">
+      <input id="slider" type="range" min="0" max="10000" step="1" aria-label="Year">
+      <div id="ticks"></div>
+    </div>
+    <button class="btn ghost" id="waiBtn">When am I?</button>
+  </div>
+</div>
+<style>.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}</style>
+
+<script id="polities" type="application/json">__POLITIES__</script>
+<script id="landdata" type="application/json">__LAND__</script>
+<script id="gamecontent" type="application/json">__CONTENT__</script>
+<script>/* d3 v7.9.0, ISC licence, inlined so the page works offline */
+__D3__</script>
+<script>
+(function(){
+'use strict';
+/* ---------- time helpers (same stretched scale as the atlas) ---------- */
+const YMIN=-3400, YMAX=2024, POW=2.4;
+const clamp01=t=>Math.max(0,Math.min(1,t));
+const yearAt=t=>Math.round(YMAX-(YMAX-YMIN)*Math.pow(1-clamp01(t),POW));
+const tAt=y=>1-Math.pow((YMAX-y)/(YMAX-YMIN),1/POW);
+const fmtYear=y=>y<0?[String(-y),'BCE']:[String(Math.max(1,y)),'CE'];
+const fmtFull=y=>{const [a,b]=fmtYear(y);return a+' '+b};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const reduceMotion=()=>window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- content ---------- */
+const C=JSON.parse($('gamecontent').textContent);
+const R=C.rewards, CPS=C.checkpoints;
+const DISC=new Map(C.discoveries.map(d=>[d.id,d]));
+const cpIndex=id=>CPS.findIndex(c=>c.id===id);
+const chCp=c=>c.checkpoint?cpIndex(c.checkpoint):cpIndex(DISC.get(c.discovery).checkpoint);
+const challengesOf=did=>C.challenges.filter(c=>c.discovery===did);
+const cpChallenges=i=>C.challenges.filter(c=>!c.discovery&&chCp(c)===i);
+const TYPE={'two-truths-lie':'Two Truths & a Lie','map-detective':'Map Detective','when-am-i':'When Am I?'};
+
+/* ---------- save / progression engine ---------- */
+const SAVE_KEY='worldmapping.atlasOfTime.v1';
+const fresh=()=>({v:1,cp:0,maxCp:0,insight:0,done:{},seen:{},mode:'adventure',waiBest:{}});
+let S=fresh(), hadSave=false, saveNote='';
+function validSave(s){
+  return s&&s.v===1&&Number.isInteger(s.cp)&&Number.isInteger(s.maxCp)&&s.maxCp>=0&&s.maxCp<CPS.length&&
+    s.cp>=0&&s.cp<=s.maxCp&&typeof s.insight==='number'&&isFinite(s.insight)&&s.insight>=0&&
+    s.done&&typeof s.done==='object'&&s.seen&&typeof s.seen==='object';
+}
+function load(){
+  let raw=null;
+  try{raw=localStorage.getItem(SAVE_KEY)}catch(e){saveNote='Progress can’t be saved in this browser.';return}
+  if(!raw) return;
+  try{const s=JSON.parse(raw); if(!validSave(s)) throw 0; S=Object.assign(fresh(),s); hadSave=true}
+  catch(e){saveNote='Your saved progress couldn’t be read, so the adventure has restarted.';S=fresh()}
+}
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
+/** Award Insight for finishing a challenge. Returns points gained (0 for replays). */
+function award(id,firstTry){
+  if(S.done[id]) return 0;
+  const g=R.complete+(firstTry?R.firstTry:0);
+  S.done[id]={firstTry:!!firstTry}; S.insight+=g; save(); showGain(g); return g;
+}
+const nextCost=()=>S.maxCp+1<CPS.length?CPS[S.maxCp+1].cost:null;
+function unlockNext(){
+  const c=nextCost(); if(c===null||S.insight<c) return false;
+  S.insight-=c; S.maxCp+=1; save(); return true;
+}
+function resetAll(){const best=S.waiBest; S=fresh(); S.waiBest=best; save()}
+/** Insight still earnable in unlocked checkpoints (used to show the player is never stuck). */
+const earnable=()=>C.challenges.filter(c=>chCp(c)<=S.maxCp&&!S.done[c.id]).length*R.complete;
+
+/* ---------- map ---------- */
+const canvas=$('map'), ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=1,transform=d3.zoomIdentity,projection=d3.geoNaturalEarth1();
+let feats=[],names=[],wiki=[],colorIdx=[],span=[],land=null,sphere={type:'Sphere'},grat=null,Q=20;
+let active=[],year=-3400,changeYears=[],theme={},first=true,landPath,spherePath,gratPath;
+let overlay={guess:null,answer:null,circle:null,highlight:null};
+
+function readTheme(){
+  const cs=getComputedStyle(document.documentElement),g=k=>cs.getPropertyValue(k).trim();
+  theme={paper:g('--paper'),land:g('--land'),sea:g('--sea'),water:g('--water'),border:g('--border'),label:g('--label'),halo:g('--halo'),accent:g('--accent'),ok:g('--ok'),pal:[0,1,2,3,4,5,6,7].map(i=>g('--c'+i))};
+}
+function decode(rings,q){
+  return rings.map(r=>{const out=[];let x=0,y=0;for(let i=0;i<r.length;i+=2){x+=r[i];y+=r[i+1];out.push([x/q,y/q])}
+    const a=out[0],b=out[out.length-1];if(a[0]!==b[0]||a[1]!==b[1])out.push([a[0],a[1]]);return out});
+}
+function fixWinding(geom){
+  geom.coordinates.forEach(poly=>{if(d3.geoArea({type:'Polygon',coordinates:poly})>2*Math.PI) poly.forEach(r=>r.reverse())});
+  return geom;
+}
+function loadData(){
+  const P=JSON.parse($('polities').textContent), L=JSON.parse($('landdata').textContent);
+  names=P.names; wiki=P.wiki; colorIdx=P.color; Q=P.q;
+  span=names.map(()=>[Infinity,-Infinity]); const cy=new Set();
+  feats=P.f.map(([n,a,b,polys])=>{span[n][0]=Math.min(span[n][0],a);span[n][1]=Math.max(span[n][1],b);cy.add(a);cy.add(b+1);return {n,a,b,polys,geom:null,path:null,area:0,lab:null}});
+  changeYears=[...cy].filter(y=>y>=YMIN&&y<=YMAX).sort((x,y)=>x-y);
+  land=fixWinding({type:'MultiPolygon',coordinates:L.map(p=>decode(p,Q))});
+  grat=d3.geoGraticule10();
+}
+function geomOf(f){if(!f.geom){f.geom=fixWinding({type:'MultiPolygon',coordinates:f.polys.map(p=>decode(p,Q))});f.polys=null}return f.geom}
+function pathOf(f){
+  if(!f.path){
+    const g=geomOf(f),p=new Path2D(); d3.geoPath(projection,p)(g); f.path=p;
+    const gp=d3.geoPath(projection); f.area=gp.area(g);
+    let best=null,ba=-1;
+    for(const poly of g.coordinates){const part={type:'Polygon',coordinates:poly};const a=gp.area(part);if(a>ba){ba=a;best=part}}
+    const c=best?gp.centroid(best):[NaN,NaN]; f.lab=isFinite(c[0])?{x:c[0],y:c[1],a:ba}:null;
+  }
+  return f.path;
+}
+function buildBase(){
+  landPath=new Path2D(); d3.geoPath(projection,landPath)(land);
+  spherePath=new Path2D(); d3.geoPath(projection,spherePath)(sphere);
+  gratPath=new Path2D(); d3.geoPath(projection,gratPath)(grat);
+}
+// While the map moves, skip the costly waterlines; draw them again once it settles.
+let moving=false,moveT=0;
+const zoom=d3.zoom().scaleExtent([1,40]).on('zoom',e=>{transform=e.transform;moving=true;clearTimeout(moveT);moveT=setTimeout(()=>{moving=false;redraw()},180);redraw()});
+function resize(){
+  // remember which place is in the middle, so a resize or rotation keeps the same view
+  let keep=null;
+  if(!first&&W&&H){const c=projection.invert(transform.invert([W/2,H/2]));if(c&&isFinite(c[0]))keep=c}
+  const r=canvas.getBoundingClientRect(); W=r.width; H=r.height; DPR=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=Math.round(W*DPR); canvas.height=Math.round(H*DPR);
+  projection=d3.geoNaturalEarth1().fitExtent([[12,12],[W-12,H-12]],sphere);
+  feats.forEach(f=>{f.path=null;f.lab=null});
+  buildBase(); zoom.translateExtent([[-W*0.5,-H*0.5],[W*1.5,H*1.5]]);
+  if(first){
+    first=false;
+    const a=projection([-12,58]),b=projection([125,8]);
+    const k=Math.max(1,Math.min(W/(b[0]-a[0]),(H-140)/(b[1]-a[1]))*0.95);
+    if(k>1.15){const cx=(a[0]+b[0])/2,cy=(a[1]+b[1])/2;d3.select(canvas).call(zoom.transform,d3.zoomIdentity.translate(W/2-cx*k,H/2+30-cy*k).scale(k))}
+  }else if(keep){
+    const p=projection(keep),k=transform.k;
+    d3.select(canvas).call(zoom.transform,d3.zoomIdentity.translate(W/2-p[0]*k,H/2-p[1]*k).scale(k));
+  }
+  setActive(); draw();
+}
+function setActive(){active=feats.filter(f=>f.a<=year&&year<=f.b);active.forEach(pathOf);active.sort((x,y)=>y.area-x.area)}
+
+function draw(){
+  if(!landPath) return;
+  const k=transform.k;
+  ctx.setTransform(DPR,0,0,DPR,0,0); ctx.fillStyle=theme.paper; ctx.fillRect(0,0,W,H);
+  ctx.setTransform(DPR*k,0,0,DPR*k,DPR*transform.x,DPR*transform.y);
+  ctx.fillStyle=theme.sea; ctx.fill(spherePath);
+  ctx.save(); ctx.clip(spherePath);
+  ctx.strokeStyle=theme.water; ctx.globalAlpha=.35; ctx.lineWidth=.5/k; ctx.stroke(gratPath); ctx.globalAlpha=1;
+  const sc=Math.min(1,W/1100)*Math.min(1.6,Math.sqrt(k));
+  for(const [w,a] of (moving||animating)?[]:[[11,.18],[8,.24],[5.5,.32],[3.2,.45]]){
+    ctx.globalAlpha=a; ctx.strokeStyle=theme.water; ctx.lineWidth=w*sc/k; ctx.stroke(landPath);
+    ctx.globalAlpha=1; ctx.strokeStyle=theme.sea; ctx.lineWidth=Math.max(.2,(w-1.1)*sc)/k; ctx.stroke(landPath);
+  }
+  ctx.restore();
+  ctx.fillStyle=theme.land; ctx.fill(landPath);
+  ctx.save(); ctx.clip(landPath);
+  for(const f of active){ctx.fillStyle=theme.pal[colorIdx[f.n]%8];ctx.globalAlpha=.92;ctx.fill(f.path,'evenodd')}
+  ctx.globalAlpha=1; ctx.strokeStyle=theme.border; ctx.lineWidth=.6/k; ctx.lineJoin='round';
+  for(const f of active) ctx.stroke(f.path);
+  if(selectedState>=0){ctx.strokeStyle=theme.accent;ctx.lineWidth=2/k;for(const f of active) if(f.n===selectedState) ctx.stroke(f.path)}
+  ctx.restore();
+  ctx.strokeStyle=theme.border; ctx.globalAlpha=.7; ctx.lineWidth=.55/k; ctx.stroke(landPath); ctx.globalAlpha=1;
+  ctx.strokeStyle=theme.water; ctx.lineWidth=1/k; ctx.stroke(spherePath);
+  drawOverlay(k);
+  if(!(activity&&activity.hideLabels)) drawLabels();
+  placePins();
+}
+function drawOverlay(k){
+  if(overlay.highlight){
+    ctx.save(); ctx.strokeStyle=theme.accent; ctx.lineWidth=3/k; ctx.setLineDash([6/k,4/k]);
+    for(const f of active) if(names[f.n]===overlay.highlight) ctx.stroke(f.path);
+    ctx.restore();
+  }
+  if(overlay.circle){
+    const p=new Path2D(); d3.geoPath(projection,p)(overlay.circle);
+    ctx.save(); ctx.fillStyle=theme.accent; ctx.globalAlpha=.12; ctx.fill(p); ctx.globalAlpha=.9;
+    ctx.strokeStyle=theme.accent; ctx.lineWidth=2/k; ctx.setLineDash([6/k,4/k]); ctx.stroke(p); ctx.restore();
+  }
+  const mark=(ll,col,r)=>{const p=projection(ll);if(!p)return;ctx.save();ctx.fillStyle=col;ctx.strokeStyle=theme.paper;ctx.lineWidth=2/k;
+    ctx.beginPath();ctx.arc(p[0],p[1],r/k,0,2*Math.PI);ctx.fill();ctx.stroke();ctx.restore()};
+  if(overlay.guess) mark(overlay.guess,theme.label,6);
+  if(overlay.answer) mark(overlay.answer,theme.ok,9);
+}
+function drawLabels(){
+  const k=transform.k;
+  ctx.setTransform(DPR,0,0,DPR,0,0); ctx.textAlign='center'; ctx.textBaseline='middle';
+  const placed=[],seen=new Set(),cand=[];
+  for(const f of active){
+    if(!f.lab||seen.has(f.n)) continue; seen.add(f.n);
+    const sa=f.lab.a*k*k; if(sa<900) continue;
+    const x=transform.x+f.lab.x*k,y=transform.y+f.lab.y*k;
+    if(x<-50||y<-20||x>W+50||y>H+20) continue;
+    cand.push({f,x,y,sa});
+  }
+  cand.sort((a,b)=>b.sa-a.sa);
+  for(const c of cand){
+    const size=Math.max(9,Math.min(22,Math.sqrt(c.sa)/9)), txt=names[c.f.n].toUpperCase();
+    ctx.font=`500 ${size}px "EB Garamond", Garamond, serif`;
+    if('letterSpacing' in ctx) ctx.letterSpacing=(size*.18).toFixed(1)+'px';
+    const w=ctx.measureText(txt).width,h=size*1.1;
+    if(w>Math.sqrt(c.sa)*3.4) continue;
+    const box=[c.x-w/2-2,c.y-h/2,c.x+w/2+2,c.y+h/2];
+    if(placed.some(b=>!(box[2]<b[0]||box[0]>b[2]||box[3]<b[1]||box[1]>b[3]))) continue;
+    placed.push(box);
+    ctx.lineWidth=3; ctx.strokeStyle=theme.halo; ctx.lineJoin='round'; ctx.strokeText(txt,c.x,c.y);
+    ctx.fillStyle=theme.label; ctx.fillText(txt,c.x,c.y);
+  }
+  if('letterSpacing' in ctx) ctx.letterSpacing='0px';
+}
+let raf=0; const redraw=()=>{if(!raf)raf=requestAnimationFrame(()=>{raf=0;draw()})};
+const screenOf=ll=>{const p=projection(ll);return [transform.x+p[0]*transform.k,transform.y+p[1]*transform.k]};
+function lonlatAt(e){const r=canvas.getBoundingClientRect();const p=transform.invert([e.clientX-r.left,e.clientY-r.top]);return projection.invert(p)}
+function stateAt(e){
+  const r=canvas.getBoundingClientRect(),[px,py]=transform.invert([e.clientX-r.left,e.clientY-r.top]);
+  ctx.setTransform(1,0,0,1,0,0);
+  for(let i=active.length-1;i>=0;i--) if(ctx.isPointInPath(active[i].path,px,py,'evenodd')) return active[i].n;
+  return -1;
+}
+/** Move the map so `ll` sits in the middle of the area the side panel (or phone sheet) leaves visible. */
+function flyTo(ll,k,besidePanel=true){
+  k=Math.max(transform.k,k||0)||transform.k; const p=projection(ll);
+  const phone=W<=560;
+  const cx=besidePanel&&!phone?(W-Math.min(380,W-24)-24)/2:W/2;
+  const cy=besidePanel&&phone?H*0.3:H/2;
+  const t=d3.zoomIdentity.translate(cx-p[0]*k,cy-p[1]*k).scale(k);
+  const sel=d3.select(canvas);
+  if(reduceMotion()) sel.call(zoom.transform,t); else sel.transition().duration(800).call(zoom.transform,t);
+}
+/** Is the named state within `tol` screen pixels of the tap? */
+function nearState(e,name,tol){
+  const r=canvas.getBoundingClientRect(),[px,py]=transform.invert([e.clientX-r.left,e.clientY-r.top]);
+  ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.lineWidth=2*tol/transform.k; ctx.lineJoin='round';
+  const hit=active.some(f=>names[f.n]===name&&(ctx.isPointInPath(f.path,px,py,'evenodd')||ctx.isPointInStroke(f.path,px,py)));
+  ctx.restore(); return hit;
+}
+function flyToState(name,besidePanel=true){
+  const f=active.filter(f=>names[f.n]===name).sort((a,b)=>b.area-a.area)[0]; if(!f||!f.lab) return;
+  // zoom in until even a small state covers a visible patch of the screen
+  const k=Math.min(12,Math.max(transform.k,Math.sqrt(4000/Math.max(f.lab.a,1))));
+  flyTo(projection.invert([f.lab.x,f.lab.y]),k,besidePanel);
+}
+
+/* ---------- UI state ---------- */
+let mode='adventure', activity=null, selectedState=-1, playing=null, animating=false;
+const elYear=$('year'), elSub=$('sub'), slider=$('slider'), panel=$('panel'), pbody=$('pbody'), clue=$('clue');
+
+function setYear(y,{fromSlider=false}={}){
+  year=Math.max(YMIN,Math.min(YMAX,Math.round(y)));
+  if(!fromSlider) slider.value=Math.round(tAt(year)*10000);
+  slider.setAttribute('aria-valuetext',fmtFull(year));
+  setActive(); renderPlate();
+  if(selectedState>=0&&!active.some(f=>f.n===selectedState)) selectedState=-1;
+  redraw();
+}
+function renderPlate(){
+  const hide=activity&&activity.type==='wai'&&!activity.revealed;
+  if(hide) elYear.innerHTML='?<small>when?</small>';
+  else{const [a,b]=fmtYear(year); elYear.innerHTML=esc(a)+'<small>'+b+'</small>'}
+  const n=new Set(active.map(f=>f.n)).size;
+  if(hide) elSub.textContent='Guess the year';
+  else if(mode==='adventure'){const cp=CPS[S.cp];const ch=C.chapters.find(c=>c.id===cp.chapter);elSub.textContent=(ch?'Chapter 1 · '+ch.title:'')}
+  else elSub.textContent=n+(n===1?' state':' states')+' on the map';
+  $('insight').hidden=mode!=='adventure'; $('insightN').textContent=S.insight;
+}
+function showGain(g){const el=$('gain');$('insightN').textContent=S.insight;el.textContent='+'+g;el.classList.remove('go');void el.offsetWidth;el.classList.add('go')}
+let toastT=0;
+function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3800)}
+
+/* ---------- pins ---------- */
+const pinEls=new Map(), pinLayer=$('pins');
+function visibleDiscoveries(){
+  if(activity) return [];
+  if(mode==='adventure') return C.discoveries.filter(d=>cpIndex(d.checkpoint)<=S.cp);
+  return C.discoveries.filter(d=>year>=d.date.from-50&&year<=(d.date.to??d.date.from)+150);
+}
+function discState(d){
+  if(mode!=='adventure') return 'free';
+  const chs=challengesOf(d.id);
+  if(chs.length&&chs.every(c=>S.done[c.id])) return 'done';
+  return S.seen[d.id]?'seen':'new';
+}
+const stateText={new:'new',seen:'challenges waiting',done:'all challenges done',free:'open story'};
+function placePins(){
+  const vis=visibleDiscoveries(),ids=new Set(vis.map(d=>d.id));
+  for(const [id,el] of pinEls) if(!ids.has(id)){el.remove();pinEls.delete(id)}
+  for(const d of vis){
+    let el=pinEls.get(d.id);
+    if(!el){el=document.createElement('button');el.className='pin';el.type='button';el.addEventListener('click',()=>openDiscovery(d.id));pinLayer.appendChild(el);pinEls.set(d.id,el)}
+    const [x,y]=screenOf([d.location.lon,d.location.lat]);
+    el.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`;
+    el.hidden=x<-20||y<-20||x>W+20||y>H+20;
+    const st=discState(d); el.dataset.state=st; el.setAttribute('aria-label',d.title+', '+stateText[st]); el.title=d.title;
+  }
+}
+
+/* ---------- panel ---------- */
+function openPanel(html){selectedState=-1;pbody.innerHTML=html;panel.classList.add('show');pbody.scrollTop=0;redraw();const h=pbody.querySelector('h2');if(h)h.id='ptitle'}
+function closePanel(){panel.classList.remove('show');selectedState=-1;if(overlay.answer||overlay.highlight){overlay={guess:null,answer:null,circle:null,highlight:null}}redraw()}
+$('pclose').onclick=closePanel;
+const on=(sel,fn)=>pbody.querySelectorAll(sel).forEach(b=>b.addEventListener('click',fn));
+const sourcesHtml=src=>src&&src.length?'<div class="sources">Sources<ul>'+src.map(s=>`<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a></li>`).join('')+'</ul></div>':'';
+const draftTag=st=>st==='reviewed'?'':'<div class="draft" title="Written for the prototype; a person still needs to check it against the sources">Draft – not yet fact-checked</div>';
+function chButton(c){
+  const d=S.done[c.id];
+  const right=d?'✓ Done'+(d.firstTry?' · bonus':''):'+'+R.complete+' ✦';
+  return `<button class="ch${d?' done':''}" data-ch="${esc(c.id)}"><span>${esc(c.title||TYPE[c.type])}</span><span class="cr">${right}</span></button>`;
+}
+
+function openDiscovery(id){
+  const d=DISC.get(id); if(!S.seen[id]&&mode==='adventure'){S.seen[id]=1;save()}
+  const chs=challengesOf(id);
+  let h=`<div class="kicker">${esc(d.region)}</div><h2>${esc(d.title)}</h2><div class="date">${esc(d.dateLabel)}</div>${draftTag(d.status)}<p>${esc(d.story)}</p>`;
+  if(chs.length){
+    if(mode==='adventure') h+='<h3>Challenges</h3><div class="chlist">'+chs.map(chButton).join('')+'</div>';
+    else h+='<p class="muted">Switch to Adventure to play this discovery’s challenges and earn Insight.</p>';
+  }
+  h+=sourcesHtml(d.sources);
+  openPanel(h); on('[data-ch]',e=>startChallenge(e.currentTarget.dataset.ch)); placePins();
+}
+function openState(n){
+  selectedState=n; const s=span[n];
+  let h=`<div class="kicker">State on the map</div><h2>${esc(names[n])}</h2><p><span id="swatch" style="background:${theme.pal[colorIdx[n]%8]}"></span>On the map ${fmtFull(s[0])} to ${fmtFull(s[1])}</p>`;
+  if(wiki[n]) h+=`<p><a href="https://en.wikipedia.org/wiki/${encodeURIComponent(wiki[n].replace(/ /g,'_'))}" target="_blank" rel="noopener" style="color:var(--accent)">Read on Wikipedia</a></p>`;
+  h+='<p class="muted" style="font-size:14px">Borders from Cliopatria, simplified. Ancient borders are approximate.</p>';
+  pbody.innerHTML=h; panel.classList.add('show'); redraw();
+}
+function openJournal(){
+  let h='<div class="kicker">Journal</div><h2>Your discoveries</h2>';
+  if(mode==='adventure'){
+    const total=C.challenges.filter(c=>chCp(c)<=S.maxCp).length, done=C.challenges.filter(c=>chCp(c)<=S.maxCp&&S.done[c.id]).length;
+    h+=`<p class="muted" style="margin-bottom:4px">${done} of ${total} unlocked challenges done</p><div class="meter"><i style="width:${total?done/total*100:0}%"></i></div>`;
+    for(let i=0;i<=S.maxCp;i++){
+      const cp=CPS[i];
+      h+=`<h3>${fmtFull(cp.year)} · ${esc(cp.headline)}</h3><div class="jl">`;
+      for(const d of C.discoveries.filter(d=>cpIndex(d.checkpoint)===i)){const st=discState(d);h+=`<button data-d="${d.id}" class="${st}"><span>${esc(d.title)}</span><span>${st==='done'?'✓ done':st==='new'?'new':'in progress'}</span></button>`}
+      for(const c of cpChallenges(i)){const dn=S.done[c.id];h+=`<button data-ch="${c.id}" class="${dn?'done':'new'}"><span>${esc(c.title)}</span><span>${dn?'✓ done':'+'+R.complete+' ✦'}</span></button>`}
+      h+='</div>';
+    }
+    if(S.maxCp<CPS.length-1) h+=`<p class="muted" style="margin-top:12px">Next: ${fmtFull(CPS[S.maxCp+1].year)} for ${CPS[S.maxCp+1].cost} ✦. You can still earn ${earnable()} ✦ from unfinished challenges.</p>`;
+    h+='<div class="row" style="margin-top:18px"><button class="btn ghost" id="restart">Restart adventure</button></div>';
+  }else{
+    h+='<p class="muted">Every discovery, with no locks. Tap one to fly there.</p><div class="jl">';
+    for(const d of C.discoveries) h+=`<button data-d="${d.id}"><span>${esc(d.title)}</span><span>${esc(d.dateLabel)}</span></button>`;
+    h+='</div>';
+  }
+  openPanel(h);
+  on('[data-d]',e=>{const d=DISC.get(e.currentTarget.dataset.d);if(mode==='free'){setYear(Math.max(YMIN,d.date.from))}flyTo([d.location.lon,d.location.lat],3);openDiscovery(d.id)});
+  on('[data-ch]',e=>startChallenge(e.currentTarget.dataset.ch));
+  const rs=$('restart'); if(rs) rs.onclick=()=>{if(confirm('Restart the adventure from 3400 BCE? Your Insight and progress will be cleared.')){resetAll();closePanel();goToCheckpoint(0,false);renderAdv();renderPlate();toast('Adventure restarted.')}};
+}
+$('journalBtn').onclick=()=>{if(activity)return;panel.classList.contains('show')&&pbody.querySelector('.kicker')?.textContent==='Journal'?closePanel():openJournal()};
+
+/* ---------- challenges ---------- */
+function startChallenge(id){
+  const c=C.challenges.find(x=>x.id===id); if(!c) return;
+  // a Map Detective needs the map at its own checkpoint (e.g. Elam only exists from 3200 BCE)
+  const ci=chCp(c);
+  if(c.type==='map-detective'&&ci!==S.cp&&ci<=S.maxCp){S.cp=ci;save();setYear(CPS[ci].year);renderAdv()}
+  if(c.type==='two-truths-lie') startTTL(c);
+  else if(c.type==='map-detective') startMD(c);
+  else if(c.type==='when-am-i') openWAIIntro(c);
+}
+const replayNote=c=>S.done[c.id]?'<p class="muted" style="font-size:15px">You’ve done this one. Replays are just for fun and don’t earn Insight.</p>':'';
+const backTo=c=>c.discovery?`<button class="back" data-back="${c.discovery}">‹ ${esc(DISC.get(c.discovery).title)}</button>`:'<button class="back" data-journal>‹ Journal</button>';
+function bindBack(){on('[data-back]',e=>openDiscovery(e.currentTarget.dataset.back));on('[data-journal]',openJournal)}
+function rewardLine(g,bonus='the first-try bonus'){return g?`<p><span class="reward">+${g} ✦ Insight</span>${g>R.complete?' including '+bonus:''}</p>`:''}
+
+/* Two Truths & a Lie */
+function startTTL(c){
+  const d=DISC.get(c.discovery);
+  let h=backTo(c)+`<div class="kicker">Two Truths &amp; a Lie</div><h2>${esc(d.title)}</h2>${draftTag(d.status)}${replayNote(c)}<p>Two of these are true. <b>Which one is the lie?</b></p><div class="claims">`+
+    c.claims.map((t,i)=>`<button class="claim" data-i="${i}"><span class="letter">${'ABC'[i]}</span><span>${esc(t)}</span></button>`).join('')+'</div><div id="result" aria-live="polite"></div>';
+  openPanel(h); bindBack();
+  on('.claim',e=>{
+    const i=+e.currentTarget.dataset.i, right=i===c.lie;
+    pbody.querySelectorAll('.claim').forEach((b,j)=>{b.disabled=true;b.classList.add(j===c.lie?'lie':'true');if(j===i)b.classList.add('picked')});
+    const g=award(c.id,right);
+    $('result').innerHTML=`<div class="verdict ${right?'good':'bad'}">${right?'You spotted the lie!':'Not quite: the lie was '+'ABC'[c.lie]+'.'}</div><p>${esc(c.explanation)}</p>${rewardLine(g)}${sourcesHtml(d.sources)}<div class="row"><button class="btn" data-back="${d.id}">Continue</button></div>`;
+    bindBack(); placePins(); renderAdv();
+  });
+}
+
+/* Map Detective */
+const DIRS=['north','north-east','east','south-east','south','south-west','west','north-west'];
+function bearing(a,b){const r=Math.PI/180,[l1,p1]=[a[0]*r,a[1]*r],[l2,p2]=[b[0]*r,b[1]*r];
+  const y=Math.sin(l2-l1)*Math.cos(p2),x=Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(l2-l1);return (Math.atan2(y,x)/r+360)%360}
+function startMD(c){
+  closePanel(); stopPlay();
+  activity={type:'md',c,attempts:0,hints:0,over:false,hideLabels:c.target.kind==='state',showList:false};
+  overlay={guess:null,answer:null,circle:null,highlight:null};
+  document.body.classList.add('picking','busy'); renderClue(); redraw();
+}
+function renderClue(fb,bad){
+  const a=activity,c=a.c,maxH=(c.hints||[]).length+1;
+  let h=`<div class="kicker">Map Detective${S.done[c.id]?' · replay':''}</div><p>${esc(c.clue)}</p>`;
+  if(a.hints) h+='<ul class="hintlist">'+(c.hints||[]).slice(0,a.hints).map(x=>`<li>${esc(x)}</li>`).join('')+(a.hints>=maxH?'<li>The area is marked on the map.</li>':'')+'</ul>';
+  h+=`<div class="fb${bad?' bad':''}" aria-live="polite">${esc(fb||(c.target.kind==='state'?'Tap the state on the map.':'Tap the place on the map. You can drag and zoom first.'))}</div>`;
+  if(a.showList){
+    const opts=c.target.kind==='state'?[...new Set(active.map(f=>names[f.n]))].sort():c.choices;
+    // shuffle once per round, so the right answer isn't always in the same spot
+    if(!a.order||a.order.length!==opts.length){a.order=opts.map((_,i)=>i);for(let i=a.order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a.order[i],a.order[j]]=[a.order[j],a.order[i]]}}
+    const order=c.target.kind==='state'?opts.map((_,i)=>i):a.order;
+    h+='<div class="choices">'+order.map(i=>`<button data-o="${i}">${esc(opts[i])}</button>`).join('')+'</div>';
+  }
+  h+=`<div class="row">${a.hints<maxH?`<button class="btn ghost" id="mdHint">Hint (${maxH-a.hints} left)</button>`:''}<button class="btn ghost" id="mdList">${a.showList?'Hide list':'Choose from a list'}</button><button class="btn ghost" id="mdShow">Show me</button><button class="btn ghost" id="mdQuit" aria-label="Stop this challenge">Stop</button></div>`;
+  clue.innerHTML=h; clue.hidden=false;
+  $('mdHint')&&($('mdHint').onclick=()=>{a.hints++;if(a.hints>(c.hints||[]).length)showArea();renderClue()});
+  $('mdList').onclick=()=>{a.showList=!a.showList;renderClue()};
+  $('mdShow').onclick=()=>mdFinish(false,true);
+  $('mdQuit').onclick=endMD;
+  clue.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.o;
+    const ok=c.target.kind==='state'?b.textContent===c.target.name:i===c.answer;
+    if(ok) mdFinish(a.attempts===0&&a.hints===0);
+    else{a.attempts++;renderClue('Not that one. Try again.',true)}
+  });
+}
+function showArea(){
+  const t=activity.c.target;
+  if(t.kind==='state'){overlay.highlight=t.name;flyToState(t.name,false)}
+  else{
+    // a circle that contains the target but isn't centred on it
+    let hsh=0;for(const ch of activity.c.id)hsh=(hsh*31+ch.charCodeAt(0))|0;
+    const ang=(Math.abs(hsh)%360)*Math.PI/180, off=t.radiusKm/111*0.9;
+    const ctr=[t.lon+off*Math.cos(ang)/Math.cos(t.lat*Math.PI/180),t.lat+off*Math.sin(ang)];
+    overlay.circle=d3.geoCircle().center(ctr).radius(t.radiusKm/111*2.2)();
+    flyTo(ctr,Math.min(4,transform.k*1.5),false);
+  }
+  redraw();
+}
+function mdTap(e){
+  const a=activity,t=a.c.target;
+  if(t.kind==='place'){
+    const ll=lonlatAt(e); if(!ll||!isFinite(ll[0])) return;
+    overlay.guess=ll; redraw();
+    const km=d3.geoDistance(ll,[t.lon,t.lat])*6371;
+    if(km<=t.radiusKm) return mdFinish(a.attempts===0&&a.hints===0);
+    a.attempts++;
+    const dir=DIRS[Math.round(bearing(ll,[t.lon,t.lat])/45)%8];
+    const dist=km>=1000?Math.round(km/100)*100:Math.round(km/10)*10;
+    renderClue(`About ${dist.toLocaleString()} km away. Try further ${dir}.`,true);
+  }else{
+    const n=stateAt(e);
+    // forgiving: a tap on or near the target counts, since some ancient states are tiny on the map
+    if((n>=0&&names[n]===t.name)||nearState(e,t.name,22)) return mdFinish(a.attempts===0&&a.hints===0);
+    if(n<0){a.attempts++;return renderClue('There’s no state there. Try tapping somewhere else.',true)}
+    a.attempts++; renderClue(`That’s ${names[n]}. Try again.`,true);
+  }
+}
+function mdFinish(firstTry,revealed){
+  const a=activity,c=a.c,t=c.target,d=DISC.get(c.discovery);
+  if(t.kind==='place'){overlay.answer=[t.lon,t.lat];overlay.circle=null;flyTo([t.lon,t.lat],Math.max(transform.k,2.5))}
+  else{overlay.highlight=t.name;flyToState(t.name)}
+  const g=award(c.id,firstTry&&!revealed);
+  endMD(true);
+  const head=revealed?'Here it is.':firstTry?'Found it, first try!':'Found it!';
+  openPanel(backTo(c)+`<div class="kicker">Map Detective</div><h2>${esc(d.title)}</h2>${draftTag(d.status)}<div class="verdict ${revealed?'':'good'}">${head}</div><p>${esc(c.explanation)}</p>${rewardLine(g)}${sourcesHtml(d.sources)}<div class="row"><button class="btn" data-back="${d.id}">Continue</button></div>`);
+  bindBack(); renderAdv();
+}
+function endMD(keepOverlay){
+  activity=null; clue.hidden=true; document.body.classList.remove('picking','busy');
+  if(keepOverlay!==true) overlay={guess:null,answer:null,circle:null,highlight:null};
+  else overlay.guess=null;
+  redraw();
+}
+
+/* When Am I? */
+function openWAIIntro(c){
+  const best=S.waiBest[c.id];
+  openPanel(backTo(c)+`<div class="kicker">When Am I?</div><h2>${esc(c.title)}</h2>${replayNote(c)}<p>${esc(c.intro)}</p><p class="muted" style="font-size:15px">State names stay on the map as clues. Get an average of 500 or more to earn the bonus.</p>${best!=null?`<p class="muted">Best: ${best} / ${c.rounds*1000}</p>`:''}<div class="row"><button class="btn" id="waiGo">Start</button></div>`);
+  bindBack(); $('waiGo').onclick=()=>startWAI({id:c.id,range:c.range,rounds:c.rounds,tolerance:c.tolerance,adventure:true});
+}
+const FREE_WAI=[
+  {id:'free-all',title:'All of history',range:[YMIN,YMAX],rounds:5,tolerance:.12},
+  {id:'free-1000',title:'Since 1000 CE',range:[1000,YMAX],rounds:5,tolerance:.2},
+];
+function openFreeWAI(){
+  let h='<div class="kicker">When Am I?</div><h2>Guess the year</h2><p>You’ll see the world map at a secret year. Read the state names and borders, then guess when it is. Five rounds, up to 1,000 points each.</p><div class="chlist">';
+  for(const m of FREE_WAI){const b=S.waiBest[m.id];h+=`<button class="ch" data-m="${m.id}"><span>${m.title}</span><span class="cr">${b!=null?'Best '+b:'Play'}</span></button>`}
+  openPanel(h+'</div>'); on('[data-m]',e=>{const m=FREE_WAI.find(x=>x.id===e.currentTarget.dataset.m);startWAI(Object.assign({adventure:false},m))});
+}
+$('waiBtn').onclick=()=>{if(!activity)openFreeWAI()};
+function startWAI(cfg){
+  stopPlay(); closePanel();
+  activity={type:'wai',cfg,i:0,scores:[],returnYear:year,revealed:false,hideLabels:false};
+  document.body.classList.add('busy'); setControlsEnabled(false); waiRound();
+}
+function waiRound(){
+  const a=activity,[y0,y1]=a.cfg.range,t0=tAt(y0),t1=tAt(y1);
+  let s; for(let k=0;k<20;k++){s=yearAt(t0+Math.random()*(t1-t0));if(!a.used||!a.used.has(s))break}
+  (a.used=a.used||new Set()).add(s);
+  a.secret=s; a.revealed=false; a.g=.5; setYear(s);
+  const gy=()=>yearAt(t0+a.g*(t1-t0));
+  openPanel(`<div class="kicker">When Am I? · round ${a.i+1} of ${a.cfg.rounds}</div><h2>When is this map?</h2><p class="muted">Pan and zoom to read the clues, then set your guess.</p><div class="guess"><div class="guessyear" id="gy"></div><input type="range" id="gs" min="0" max="1000" value="500" aria-label="Your guess"><div class="row muted" style="justify-content:space-between;margin-top:0;font-size:14px"><span>${fmtFull(y0)}</span><span>${fmtFull(y1)}</span></div></div><div class="row"><button class="btn" id="lock">Lock in guess</button><button class="btn ghost" id="waiQuit">Stop</button></div><div id="wr" aria-live="polite"></div>`);
+  const upd=()=>{a.g=+$('gs').value/1000;$('gy').textContent=fmtFull(gy())};
+  $('gs').oninput=upd; upd();
+  $('waiQuit').onclick=endWAI;
+  $('lock').onclick=()=>{
+    const g=gy(),err=Math.abs(g-s),frac=Math.abs(tAt(g)-tAt(s))/(t1-t0);
+    const sc=Math.round(1000*Math.max(0,1-frac/a.cfg.tolerance)); a.scores.push(sc); a.revealed=true; renderPlate();
+    $('gs').disabled=true; $('lock').remove();
+    const last=a.i+1>=a.cfg.rounds;
+    $('wr').innerHTML=`<div class="verdict">It’s ${fmtFull(s)}.</div><p>You guessed ${fmtFull(g)}: ${err===0?'exactly right!':err.toLocaleString()+(err===1?' year':' years')+' off.'}</p><div class="score">${sc} <span class="muted" style="font-size:18px">/ 1000</span></div><div class="row"><button class="btn" id="wnext">${last?'See your score':'Next round'}</button></div>`;
+    $('wnext').onclick=()=>{a.i++;last?waiDone():waiRound()};
+  };
+}
+function waiDone(){
+  const a=activity,total=a.scores.reduce((x,y)=>x+y,0),avg=total/a.scores.length,cfg=a.cfg;
+  const prev=S.waiBest[cfg.id]; if(prev==null||total>prev){S.waiBest[cfg.id]=total;save()}
+  let g=0; if(cfg.adventure) g=award(cfg.id,avg>=500);
+  const c=cfg.adventure?C.challenges.find(x=>x.id===cfg.id):null;
+  openPanel(`<div class="kicker">When Am I?</div><h2>${total.toLocaleString()} points</h2><p>Rounds: ${a.scores.join(' · ')}</p>${prev!=null&&total>prev?'<p><b>New best score!</b></p>':''}${rewardLine(g,'the accuracy bonus')}<div class="row"><button class="btn" id="again">Play again</button><button class="btn ghost" id="wdone">Done</button></div>`);
+  $('again').onclick=()=>{const cf=cfg;endWAI(true);startWAI(cf)};
+  $('wdone').onclick=()=>{endWAI();if(c)openJournal()};
+}
+function endWAI(silent){
+  const a=activity; activity=null; document.body.classList.remove('busy'); setControlsEnabled(true);
+  setYear(mode==='adventure'?CPS[S.cp].year:a.returnYear); if(silent!==true) closePanel(); renderAdv();
+}
+function setControlsEnabled(on){['mAdv','mFree','journalBtn','prev','play','next','slider','waiBtn','advance'].forEach(id=>$(id).disabled=!on);$('cptrack').querySelectorAll('button').forEach(b=>b.disabled=!on)}
+
+/* ---------- adventure timeline ---------- */
+function renderAdv(){
+  const t=$('cptrack'); let h='';
+  CPS.forEach((cp,i)=>{
+    const unlocked=i<=S.maxCp, cur=i===S.cp;
+    if(i) h+=`<span class="cpline${i<=S.maxCp?' on':''}"></span>`;
+    h+=`<button class="cp${unlocked?' unlocked':' locked'}${cur?' current':''}" data-cp="${i}" ${unlocked?'':'aria-disabled="true"'} aria-label="${fmtFull(cp.year)}${unlocked?'':', locked, '+cp.cost+' Insight'}${cur?', current':''}"><span class="dot"></span><span class="lab">${fmtFull(cp.year)}</span><span class="cost">${unlocked?(cur?'you are here':'revisit'):'🔒 '+cp.cost+' ✦'}</span></button>`;
+  });
+  t.innerHTML=h;
+  t.querySelectorAll('.cp.unlocked').forEach(b=>b.onclick=()=>{const i=+b.dataset.cp;if(i!==S.cp&&!animating&&!activity)goToCheckpoint(i,true)});
+  const adv=$('advance'), nxt=S.cp+1;
+  if(nxt>=CPS.length){adv.innerHTML='More eras coming soon';adv.disabled=true}
+  else if(nxt<=S.maxCp){adv.innerHTML=`Forward to ${fmtFull(CPS[nxt].year)} ›`;adv.disabled=!!activity}
+  else{
+    const c=CPS[nxt].cost,short=c-S.insight;
+    adv.innerHTML=short>0?`Unlock ${fmtFull(CPS[nxt].year)} <span class="cost">· need ${short} more ✦</span>`:`Unlock ${fmtFull(CPS[nxt].year)} <span class="cost">· ${c} ✦</span>`;
+    adv.disabled=short>0||!!activity;
+  }
+  renderPlate();
+}
+$('advance').onclick=()=>{
+  if(animating||activity) return;
+  const nxt=S.cp+1; if(nxt>=CPS.length) return;
+  if(nxt<=S.maxCp) return goToCheckpoint(nxt,true);
+  if(unlockNext()) goToCheckpoint(nxt,true,true);
+};
+function goToCheckpoint(i,animate,isNew){
+  const from=year,to=CPS[i].year,prevYear=CPS[S.cp].year;
+  S.cp=i; save(); closePanel(); renderAdv();
+  const arrive=()=>{animating=false;setYear(to);renderAdv();if(isNew)arrival(i,prevYear);redraw()};
+  if(!animate||reduceMotion()||from===to){arrive();return}
+  animating=true; const dur=Math.min(2600,700+Math.abs(to-from)*7),t0=performance.now();
+  const tick=now=>{const p=Math.min(1,(now-t0)/dur),e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;setYear(from+(to-from)*e);if(p<1)requestAnimationFrame(tick);else arrive()};
+  requestAnimationFrame(tick);
+}
+function arrival(i,prevYear){
+  const cp=CPS[i];
+  const before=new Set(feats.filter(f=>f.a<=prevYear&&prevYear<=f.b).map(f=>names[f.n]));
+  const newStates=[...new Set(active.map(f=>names[f.n]))].filter(n=>!before.has(n));
+  const ds=C.discoveries.filter(d=>cpIndex(d.checkpoint)===i), cc=cpChallenges(i);
+  let h=`<div class="kicker">${fmtFull(cp.year)} unlocked</div><h2>${esc(cp.headline)}</h2><p>${esc(cp.intro)}</p>`;
+  if(newStates.length) h+=`<h3>New on the map</h3><p>${newStates.map(esc).join(', ')}</p>`;
+  h+='<h3>New discoveries</h3><div class="newlist">'+ds.map(d=>`<button data-d="${d.id}">${esc(d.title)}<small>${esc(d.region)}</small></button>`).join('')+cc.map(c=>`<button data-ch="${c.id}">${esc(c.title)}<small>A challenge for this checkpoint</small></button>`).join('')+'</div>';
+  openPanel(h);
+  on('[data-d]',e=>{const d=DISC.get(e.currentTarget.dataset.d);flyTo([d.location.lon,d.location.lat],2.5);openDiscovery(d.id)});
+  on('[data-ch]',e=>startChallenge(e.currentTarget.dataset.ch));
+}
+
+/* ---------- free roam (the atlas) ---------- */
+function step(dir){
+  let y; if(dir>0) y=changeYears.find(c=>c>year); else for(let i=changeYears.length-1;i>=0;i--) if(changeYears[i]<year){y=changeYears[i];break}
+  if(y!==undefined) setYear(y); else if(dir>0) stopPlay();
+}
+function stopPlay(){if(!playing)return;clearInterval(playing);playing=null;const b=$('play');b.classList.remove('on');b.textContent='▶';b.setAttribute('aria-label','Play border changes')}
+function togglePlay(){
+  if(playing){stopPlay();return}
+  if(year>=YMAX) setYear(YMIN);
+  const b=$('play'); b.classList.add('on'); b.textContent='❚❚'; b.setAttribute('aria-label','Pause'); playing=setInterval(()=>step(1),650);
+}
+$('prev').onclick=()=>{stopPlay();step(-1)}; $('next').onclick=()=>{stopPlay();step(1)}; $('play').onclick=togglePlay;
+slider.addEventListener('input',()=>{stopPlay();setYear(yearAt(slider.value/10000),{fromSlider:true})});
+function ticks(){
+  const el=$('ticks'); el.innerHTML='';
+  [[-3000,'3000 BCE',0],[-1000,'1000 BCE',1],[1,'1 CE',0],[1000,'1000',1],[1500,'1500',0],[1900,'1900',1]].forEach(([y,l,m])=>{
+    const s=document.createElement('span'); s.style.left=(tAt(y)*100)+'%'; s.textContent=l; if(m)s.className='minor'; el.appendChild(s);
+  });
+}
+function setMode(m,{silent}={}){
+  if(activity||animating) return;
+  mode=m; S.mode=m; save(); stopPlay(); closePanel();
+  $('mAdv').setAttribute('aria-pressed',m==='adventure'); $('mFree').setAttribute('aria-pressed',m==='free');
+  $('advbar').hidden=m!=='adventure'; $('freebar').hidden=m!=='free';
+  if(m==='adventure') setYear(CPS[S.cp].year); else setYear(year);
+  renderAdv(); resize();
+  if(!silent) toast(m==='adventure'?'Adventure: earn Insight to unlock time.':'Free roam: everything is open. Drag the slider anywhere.');
+}
+$('mAdv').onclick=()=>setMode('adventure'); $('mFree').onclick=()=>setMode('free');
+
+/* ---------- input ---------- */
+canvas.addEventListener('click',e=>{
+  if(activity&&activity.type==='md'){mdTap(e);return}
+  if(activity) return;
+  const n=stateAt(e); if(n>=0) openState(n); else closePanel();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){if(activity&&activity.type==='md')endMD();else if(!activity)closePanel();return}
+  if(e.target===slider||activity||mode!=='free'||/INPUT|BUTTON/.test(e.target.tagName)) return;
+  if(e.key==='ArrowRight'){stopPlay();step(1)} else if(e.key==='ArrowLeft'){stopPlay();step(-1)}
+});
+d3.select(canvas).call(zoom).on('dblclick.zoom',null);
+const mq=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)');
+mq&&mq.addEventListener&&mq.addEventListener('change',()=>{readTheme();redraw()});
+window.addEventListener('resize',resize);
+
+/* ---------- start ---------- */
+readTheme(); load();
+setTimeout(()=>{
+  loadData(); ticks();
+  mode=S.mode==='free'?'free':'adventure';
+  $('mAdv').setAttribute('aria-pressed',mode==='adventure'); $('mFree').setAttribute('aria-pressed',mode==='free');
+  $('advbar').hidden=mode!=='adventure'; $('freebar').hidden=mode!=='free';
+  year=CPS[S.cp].year; resize(); setYear(year); renderAdv(); draw();
+  if(!hadSave){$('intro').hidden=false;$('introStart').focus()}
+  else if(saveNote) toast(saveNote); else toast(mode==='adventure'?'Welcome back. You’re at '+fmtFull(year)+' with '+S.insight+' ✦.':'Welcome back to free roam.');
+  if(saveNote&&!hadSave) toast(saveNote);
+  if(document.fonts&&document.fonts.load) document.fonts.load('500 14px "EB Garamond"').then(redraw).catch(()=>{});
+},30);
+$('introStart').onclick=()=>{$('intro').hidden=true;S.mode='adventure';save();if(mode!=='adventure')setMode('adventure',{silent:true});toast('Tap a glowing pin to start exploring.')};
+$('introFree').onclick=()=>{$('intro').hidden=true;setMode('free')};
+
+/* test hook: lets a headless browser drive and inspect the game */
+window.AtlasOfTime={state:()=>JSON.parse(JSON.stringify(S)),award,unlockNext,earnable,reset:resetAll,
+  goToCheckpoint:i=>goToCheckpoint(i,false),startChallenge,setMode,get year(){return year},get activity(){return activity},draw,
+  stateNames:()=>[...new Set(active.map(f=>names[f.n]))],screenOf:ll=>screenOf(ll),canvas,
+  view:(ll,k)=>{const p=projection(ll);d3.select(canvas).call(zoom.transform,d3.zoomIdentity.translate(W/2-p[0]*k,H/2-p[1]*k).scale(k))}};
+})();
+</script>
+</body>
+</html>

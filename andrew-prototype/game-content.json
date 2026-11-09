@@ -1,0 +1,286 @@
+{
+  "schemaVersion": 1,
+  "note": "Years follow the border data: negative numbers are BCE (-3400 = 3400 BCE). Every item stays \"draft\" until a person has checked it against its sources.",
+  "rewards": { "complete": 30, "firstTry": 10 },
+  "chapters": [
+    { "id": "ch1", "title": "Cities, Writing & Early States", "from": -3400, "to": -2500 }
+  ],
+  "checkpoints": [
+    {
+      "id": "cp-3400", "year": -3400, "chapter": "ch1", "cost": 0,
+      "headline": "Cities and the first writing",
+      "intro": "In southern Mesopotamia, people are crowding into the first big cities and starting to keep records on clay. Most people in the world still live in villages and farming or foraging communities that left no writing at all."
+    },
+    {
+      "id": "cp-3200", "year": -3200, "chapter": "ch1", "cost": 70,
+      "headline": "New states and great monuments",
+      "intro": "A second state, Elam, has appeared east of Sumer. In Ireland, farmers are raising enormous stone-lined tombs, and in eastern China a rice-farming society is building towns, canals and earthworks."
+    },
+    {
+      "id": "cp-3000", "year": -3000, "chapter": "ch1", "cost": 70,
+      "headline": "Kingdoms and great rivers",
+      "intro": "Egypt has become one kingdom along the Nile, towns are growing along the Indus, the first Stonehenge has been dug on Salisbury Plain, and on Peru's desert coast people are building large monuments."
+    }
+  ],
+  "discoveries": [
+    {
+      "id": "uruk", "checkpoint": "cp-3400", "status": "draft",
+      "title": "Uruk and the first writing",
+      "dateLabel": "c. 3400–3200 BCE",
+      "date": { "from": -3400, "to": -3000, "approx": true },
+      "region": "Southern Mesopotamia (today's Iraq)",
+      "location": { "lat": 31.322, "lon": 45.636, "precision": "site" },
+      "story": "Uruk was one of the first true cities. Thousands of people lived there around huge temple buildings, and many of them didn't farm at all: they were priests, potters, weavers and officials. To keep track of grain, beer, sheep and workers, officials began pressing signs into small tablets of wet clay. Over time these marks became cuneiform, one of the world's earliest writing systems. For the first time, people could store information outside their own memories.",
+      "sources": [
+        { "title": "Uruk (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Uruk" },
+        { "title": "Proto-cuneiform (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Proto-cuneiform" }
+      ]
+    },
+    {
+      "id": "otzi", "checkpoint": "cp-3400", "status": "draft",
+      "title": "Ötzi the Iceman",
+      "dateLabel": "lived c. 3350–3100 BCE",
+      "date": { "from": -3350, "to": -3105, "approx": true },
+      "region": "The Ötztal Alps, on today's border of Austria and Italy",
+      "location": { "lat": 46.7789, "lon": 10.8399, "precision": "site" },
+      "story": "In 1991, two hikers in the Alps spotted a body in the melting ice. At first everyone thought it was a recent accident. It turned out to be a man who died more than 5,000 years ago. The glacier ice had preserved his skin, clothes, tattoos and tools, including a copper axe, a bow, arrows and a fire-lighting kit. X-rays later found a stone arrowhead in his shoulder. Ötzi gives us a rare close-up of one ordinary person's life in Copper Age Europe.",
+      "sources": [
+        { "title": "Ötzi (Wikipedia)", "url": "https://en.wikipedia.org/wiki/%C3%96tzi" },
+        { "title": "South Tyrol Museum of Archaeology", "url": "https://www.iceman.it/en/" }
+      ]
+    },
+    {
+      "id": "abydos", "checkpoint": "cp-3400", "status": "draft",
+      "title": "Tomb U-j at Abydos",
+      "dateLabel": "c. 3300 BCE",
+      "date": { "from": -3320, "to": -3150, "approx": true },
+      "region": "Upper Egypt, beside the Nile",
+      "location": { "lat": 26.176, "lon": 31.905, "precision": "site" },
+      "story": "Long before the pyramids, the leaders of Upper Egypt were buried in the desert at Abydos. One large tomb, now called U-j, held about 2,000 pots, some carrying the earliest known traces of wine in Egypt, and many small labels of bone and ivory. The labels are carved with signs that may name places or goods. They are among the oldest known Egyptian writing, about as old as the first writing in Mesopotamia. Archaeologists still debate whether the two systems began separately.",
+      "sources": [
+        { "title": "Umm El Qa'ab, including Tomb U-j (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Umm_El_Qa%27ab" }
+      ]
+    },
+    {
+      "id": "newgrange", "checkpoint": "cp-3200", "status": "draft",
+      "title": "Newgrange",
+      "dateLabel": "built c. 3100 BCE",
+      "date": { "from": -3200, "to": -2900, "approx": true },
+      "region": "Boyne Valley, Ireland",
+      "location": { "lat": 53.6947, "lon": -6.4755, "precision": "site" },
+      "story": "Newgrange is a huge round mound of earth and stone with a long passage leading to a chamber inside. Farming communities built it more than 5,000 years ago, without metal tools. Its builders lined it up with the sun: at sunrise around the winter solstice, light shines through a 'roof-box' above the entrance, travels down the passage and lights up the chamber floor. Large stones carved with spirals and other patterns ring the mound.",
+      "sources": [
+        { "title": "Newgrange (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Newgrange" }
+      ]
+    },
+    {
+      "id": "liangzhu", "checkpoint": "cp-3200", "status": "draft",
+      "title": "Liangzhu",
+      "dateLabel": "c. 3300–2300 BCE",
+      "date": { "from": -3300, "to": -2300, "approx": true },
+      "region": "Lower Yangtze River, eastern China",
+      "location": { "lat": 30.39, "lon": 119.99, "precision": "site" },
+      "story": "Near where the Yangtze River meets the sea, the Liangzhu culture grew rice and built a large walled settlement criss-crossed by waterways. North of it, archaeologists found long earth walls that were probably dams for controlling floods. Liangzhu craftspeople carved beautiful objects from jade, including square tubes called cong that seem to have mattered in ceremonies. Jade, silk and ivory turn up only in rich people's graves, a sign of a society with clear ranks.",
+      "sources": [
+        { "title": "Liangzhu culture (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Liangzhu_culture" }
+      ]
+    },
+    {
+      "id": "elam", "checkpoint": "cp-3200", "status": "draft",
+      "title": "Elam and the city of Susa",
+      "dateLabel": "from c. 3200 BCE",
+      "date": { "from": -3200, "to": -539, "approx": true },
+      "region": "South-west Iran",
+      "location": { "lat": 32.19, "lon": 48.25, "precision": "city" },
+      "story": "East of Sumer, in the lowlands and mountains of what is now south-west Iran, the people of Elam built their own state, with Susa as one of its great cities. Elam traded and fought with its Mesopotamian neighbours for more than 2,000 years. Around 3100 BCE its scribes developed their own script, called proto-Elamite. Unlike early cuneiform, it is still largely undeciphered: we have their records, but apart from the numbers we can't read them yet.",
+      "sources": [
+        { "title": "Elam (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Elam" },
+        { "title": "Proto-Elamite script (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Proto-Elamite_script" }
+      ]
+    },
+    {
+      "id": "narmer", "checkpoint": "cp-3000", "status": "draft",
+      "title": "Narmer and a united Egypt",
+      "dateLabel": "c. 3100 BCE",
+      "date": { "from": -3150, "to": -2900, "approx": true },
+      "region": "The Nile Valley, Egypt",
+      "location": { "lat": 25.09, "lon": 32.78, "precision": "site" },
+      "story": "For centuries the Nile Valley had separate regions: Upper Egypt in the south and Lower Egypt in the Nile Delta. Around 3100 BCE they were joined into one kingdom, and many historians link this to a king called Narmer. A carved stone slab found at Hierakonpolis, the Narmer Palette, shows him wearing the white crown of Upper Egypt on one side and the red crown of Lower Egypt on the other. Egypt would stay a single kingdom, on and off, for nearly 3,000 years.",
+      "sources": [
+        { "title": "Narmer Palette (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Narmer_Palette" }
+      ]
+    },
+    {
+      "id": "indus", "checkpoint": "cp-3000", "status": "draft",
+      "title": "Early towns of the Indus",
+      "dateLabel": "early phase c. 3300–2600 BCE",
+      "date": { "from": -3300, "to": -1300, "approx": true },
+      "region": "Indus River valley (today's Pakistan and north-west India)",
+      "location": { "lat": 30.63, "lon": 72.86, "precision": "site" },
+      "story": "Along the Indus River and its neighbours, farming villages were growing into towns, at places like Harappa. Over the next few centuries this became one of the largest early civilizations, with carefully planned cities, bricks made to standard sizes, and drains and covered sewers. Its people carved short inscriptions on small stone seals, but nobody has been able to read the Indus script yet.",
+      "sources": [
+        { "title": "Indus Valley Civilisation (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Indus_Valley_Civilisation" }
+      ]
+    },
+    {
+      "id": "stonehenge", "checkpoint": "cp-3000", "status": "draft",
+      "title": "The first Stonehenge",
+      "dateLabel": "first stage c. 3100 BCE",
+      "date": { "from": -3100, "to": -1600, "approx": true },
+      "region": "Salisbury Plain, southern England",
+      "location": { "lat": 51.1789, "lon": -1.8262, "precision": "site" },
+      "story": "Stonehenge didn't start with giant stones. Around 3100 BCE, people dug a circular ditch and bank on Salisbury Plain using antler picks, and for centuries buried the cremated remains of some of their dead there. The famous huge sarsen stones were raised several hundred years later, around 2600–2400 BCE. Some of the smaller 'bluestones' were brought all the way from hills in Wales, more than 200 km away.",
+      "sources": [
+        { "title": "Stonehenge (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Stonehenge" },
+        { "title": "History of Stonehenge (English Heritage)", "url": "https://www.english-heritage.org.uk/visit/places/stonehenge/history-and-stories/history/" }
+      ]
+    },
+    {
+      "id": "caral", "checkpoint": "cp-3000", "status": "draft",
+      "title": "Norte Chico and Caral",
+      "dateLabel": "c. 3000–1800 BCE",
+      "date": { "from": -3000, "to": -1800, "approx": true },
+      "region": "Peru's desert coast, South America",
+      "location": { "lat": -10.893, "lon": -77.52, "precision": "region" },
+      "story": "On the dry coast of Peru, in a cluster of river valleys, people built some of the earliest large monuments in the Americas: big earth platform mounds and sunken circular plazas. The best-known site, Caral, grew into a large settlement around 2600 BCE. Inland farmers grew cotton, used for fishing nets, and traded with coastal villages, whose catch of anchovies and sardines reached inland. They did all this without pottery.",
+      "sources": [
+        { "title": "Norte Chico civilization (Wikipedia)", "url": "https://en.wikipedia.org/wiki/Norte_Chico_civilization" }
+      ]
+    }
+  ],
+  "challenges": [
+    {
+      "id": "uruk-ttl", "discovery": "uruk", "type": "two-truths-lie", "difficulty": "easy",
+      "claims": [
+        "Most early clay tablets from Uruk were records of things like grain, beer, sheep and workers.",
+        "Early writing was pressed or drawn into tablets of wet clay.",
+        "The first Mesopotamian writing was used mainly to write down stories and poems."
+      ],
+      "lie": 2,
+      "explanation": "The earliest tablets are almost all administrative: lists of goods, workers and rations. Stories and poems, like the tales of Gilgamesh, were written down many centuries later."
+    },
+    {
+      "id": "uruk-md", "discovery": "uruk", "type": "map-detective", "difficulty": "easy",
+      "clue": "Find Uruk: a city on the Euphrates River in southern Mesopotamia, the 'land between the rivers'.",
+      "hints": ["It's in West Asia, in today's Iraq.", "Follow the Tigris and Euphrates rivers south toward the Persian Gulf."],
+      "target": { "kind": "place", "lat": 31.322, "lon": 45.636, "radiusKm": 350 },
+      "choices": ["Between the Tigris and Euphrates, in today's Iraq", "Beside the Nile, in today's Egypt", "On the Black Sea coast of today's Turkey"],
+      "answer": 0,
+      "explanation": "Uruk lay in the far south of Mesopotamia, near the Euphrates. Its ruins, at Warka in Iraq, are about 250 km south-east of Baghdad."
+    },
+    {
+      "id": "otzi-ttl", "discovery": "otzi", "type": "two-truths-lie", "difficulty": "easy",
+      "claims": [
+        "Hikers found him in 1991, frozen into the ice high in the Alps.",
+        "He carried an axe with a blade of almost pure copper.",
+        "His community buried him in a stone tomb along with his tools."
+      ],
+      "lie": 2,
+      "explanation": "Ötzi wasn't buried. He died high in the mountains, probably killed by an arrow, and snow and ice covered his body and preserved it for over 5,000 years."
+    },
+    {
+      "id": "otzi-md", "discovery": "otzi", "type": "map-detective", "difficulty": "medium",
+      "clue": "Find where Ötzi was discovered: high in the mountains of central Europe, on the border of today's Austria and Italy.",
+      "hints": ["It's in Europe.", "Look for the Alps, just north of Italy."],
+      "target": { "kind": "place", "lat": 46.7789, "lon": 10.8399, "radiusKm": 300 },
+      "choices": ["In the Alps, between Austria and Italy", "In the Pyrenees, between France and Spain", "In the mountains of Norway"],
+      "answer": 0,
+      "explanation": "Ötzi was found near the Tisenjoch pass in the Ötztal Alps, a few metres from the Austria–Italy border. He's now in a museum in Bolzano, Italy."
+    },
+    {
+      "id": "abydos-ttl", "discovery": "abydos", "type": "two-truths-lie", "difficulty": "easy",
+      "claims": [
+        "Small bone and ivory labels in the tomb carry some of the oldest known Egyptian signs.",
+        "The tomb was built for Queen Cleopatra.",
+        "Pots in the tomb held the earliest known traces of wine in Egypt."
+      ],
+      "lie": 1,
+      "explanation": "Cleopatra lived about 3,300 years after this tomb was built: she died in 30 BCE. Nobody knows for sure whose tomb U-j was; one suggestion is an early ruler that archaeologists call Scorpion I."
+    },
+    {
+      "id": "newgrange-ttl", "discovery": "newgrange", "type": "two-truths-lie", "difficulty": "medium",
+      "claims": [
+        "Newgrange is older than both Stonehenge's giant stones and the Great Pyramid of Giza.",
+        "On midsummer's morning, sunlight shines all the way down its passage.",
+        "Large stones carved with spirals and other patterns ring the mound."
+      ],
+      "lie": 1,
+      "explanation": "The light show happens around the winter solstice in late December, the shortest days of the year, not at midsummer. Newgrange (about 3100 BCE) is centuries older than Stonehenge's big sarsen stones (about 2600–2400 BCE) and the Great Pyramid (about 2560 BCE)."
+    },
+    {
+      "id": "liangzhu-md", "discovery": "liangzhu", "type": "map-detective", "difficulty": "medium",
+      "clue": "Find Liangzhu: a rice-farming society in the wet lowlands where China's longest river reaches the sea.",
+      "hints": ["It's in East Asia, on the coast of today's China.", "Look around the Yangtze River delta, near today's Shanghai."],
+      "target": { "kind": "place", "lat": 30.39, "lon": 119.99, "radiusKm": 350 },
+      "choices": ["The Yangtze River delta, eastern China", "The Yellow River plain, northern China", "The island of Taiwan"],
+      "answer": 0,
+      "explanation": "The ancient city of Liangzhu is near today's Hangzhou, about 170 km south-west of Shanghai, in the Yangtze River delta."
+    },
+    {
+      "id": "elam-md", "discovery": "elam", "type": "map-detective", "difficulty": "easy",
+      "clue": "A second state has appeared on the map: Elam, just east of the Sumerian city-states. Tap it.",
+      "hints": ["It's right next door to Sumer.", "Look east of the Tigris River, toward the Zagros Mountains of Iran."],
+      "target": { "kind": "state", "name": "Elam" },
+      "explanation": "Elam covered the lowlands and hills of south-west Iran. Being neighbours made Elam and Mesopotamia partners in trade, and often rivals in war."
+    },
+    {
+      "id": "narmer-ttl", "discovery": "narmer", "type": "two-truths-lie", "difficulty": "easy",
+      "claims": [
+        "The Narmer Palette shows the king wearing the crowns of both Upper and Lower Egypt.",
+        "The Narmer Palette was found inside the Great Pyramid of Giza.",
+        "It is one of the earliest known pictures of an Egyptian king."
+      ],
+      "lie": 1,
+      "explanation": "The palette was dug up at Hierakonpolis, in southern Egypt, in 1897–98. The Great Pyramid wasn't built until about 500 years after Narmer's time."
+    },
+    {
+      "id": "narmer-md", "discovery": "narmer", "type": "map-detective", "difficulty": "easy",
+      "clue": "A new kingdom now stretches along a great river in north-east Africa: Upper and Lower Egypt, joined together. Tap it.",
+      "hints": ["It's in Africa, by the Mediterranean.", "Follow the Nile south from its delta."],
+      "target": { "kind": "state", "name": "Early Dynastic Period of Egypt" },
+      "explanation": "Egypt's first kingdom ran along the Nile from the Delta to the First Cataract at Aswan. Historians call this time the Early Dynastic Period."
+    },
+    {
+      "id": "indus-md", "discovery": "indus", "type": "map-detective", "difficulty": "easy",
+      "clue": "Another river civilization has appeared, in South Asia, along a river that flows from the Himalayas to the Arabian Sea. Tap it.",
+      "hints": ["It's in South Asia.", "Look at today's Pakistan."],
+      "target": { "kind": "state", "name": "Indus Valley Civilization" },
+      "explanation": "The Indus civilization grew along the Indus River and its tributaries in today's Pakistan and north-west India. At its height it covered more land than Egypt or Mesopotamia."
+    },
+    {
+      "id": "stonehenge-ttl", "discovery": "stonehenge", "type": "two-truths-lie", "difficulty": "medium",
+      "claims": [
+        "The first Stonehenge, around 3100 BCE, was a circular ditch and bank.",
+        "All of Stonehenge's giant stones were already standing by 3000 BCE.",
+        "Some of its smaller stones came from hills in Wales, more than 200 km away."
+      ],
+      "lie": 1,
+      "explanation": "The huge sarsen stones were put up around 2600–2400 BCE, centuries after the first ditch was dug. Stonehenge kept changing for about 1,500 years."
+    },
+    {
+      "id": "caral-ttl", "discovery": "caral", "type": "two-truths-lie", "difficulty": "hard",
+      "claims": [
+        "They built large earth platform mounds and sunken circular plazas.",
+        "They grew cotton, which was used to make fishing nets.",
+        "They stored food in beautifully painted pottery jars."
+      ],
+      "lie": 2,
+      "explanation": "Norte Chico is called 'preceramic': these communities didn't make pottery at all. That makes their huge monuments even more surprising."
+    },
+    {
+      "id": "caral-md", "discovery": "caral", "type": "map-detective", "difficulty": "medium",
+      "clue": "Find Norte Chico: river valleys on the dry Pacific coast of South America, north of today's Lima.",
+      "hints": ["It's in South America. You'll need to pan the map west across the Atlantic.", "Look at the Pacific coast of Peru."],
+      "target": { "kind": "place", "lat": -10.893, "lon": -77.52, "radiusKm": 400 },
+      "choices": ["The Pacific coast of Peru", "The Amazon rainforest in Brazil", "The Caribbean coast of Colombia"],
+      "answer": 0,
+      "explanation": "Caral is in the Supe Valley, about 180 km north of Lima, where small rivers cross Peru's coastal desert on their way from the Andes to the Pacific."
+    },
+    {
+      "id": "wai-ch1", "checkpoint": "cp-3000", "type": "when-am-i", "difficulty": "medium",
+      "title": "When am I? Chapter 1",
+      "intro": "Three maps from the last 400 years, with the year hidden. Use what you've seen to guess when each one is.",
+      "range": [-3400, -3000], "rounds": 3, "tolerance": 0.5
+    }
+  ]
+}
