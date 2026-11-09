@@ -1594,6 +1594,15 @@ Potential influences:
 
 The game should feel rewarding through discovery and meaningful progression.
 
+**v0.4: Vegas mode (opt-in).** Requested as an "addictive" mode: neon theme, marquee lights, casino sounds, and a random bonus spin after right answers (×2 for two of a kind, ×5 for a jackpot) plus hot-streak bonuses. To stay consistent with this section and §19, it is **off by default** and follows fixed guardrails:
+
+- Rewards are variable but only ever **added to a right answer**. There's no wagering of Insight and no way to lose by playing.
+- The reels are **honest random draws**, with no engineered near-misses.
+- Flashes stay **under 3 per second** (the photosensitive seizure threshold), and reduced motion disables the light show.
+- There's a **break reminder** after 25 minutes.
+
+Open question for playtesting: does the bonus spin pull attention to the reels and away from the explanation? If it does, move the spin below the explanation, or show it only after the player taps Continue.
+
 Avoid relying on excessive gamification effects, unnecessary notifications, or manipulative engagement mechanics.
 
 ---

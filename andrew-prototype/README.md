@@ -34,6 +34,13 @@ Edit `template.html`, not `index.html`. The build fills in the template's placeh
 - **Points only for right answers:** +40 for right first time, +25 for a second try or finding it with hints, nothing for a wrong answer or "Show me". A challenge you got wrong comes back as a **review** after two more challenges, worth +20 if you get it right first time. That way nobody can get stuck. Replays and practice rounds earn nothing.
 - **Tap any state** to see what it was like that year: when it appeared, how big it was compared with everyone else, Wikipedia's overview and a gallery of pictures you can open full-size. Each state you look at goes in your **passport** (in the Journal).
 - **Saves (☰ menu):** up to 6 named adventures on one device, so you and Sam can each have your own. **Download** saves one to a file, and **Load from a file** brings it back on any computer or phone as a new save, never overwriting one. Saves from the first version are brought over automatically.
+- **🎰 Vegas mode** (the slot-machine button, or ☰ › Settings): neon colours, chasing marquee lights, synthesised casino sounds, and a **bonus spin** after every right answer. **You pull the big red handle yourself**: click it, tap it, drag it down, or press Enter. The draw happens at the moment you pull. Three random reels pay ×2 for two of a kind and ×5 for a jackpot (about a 1-in-36 chance). Spins you don't pull are saved, appear as "🎰 N spins waiting" under the meter, and travel inside downloaded save files. Three or more right answers in a row add a +10 **hot streak** bonus each. It's off by default. Ground rules, since the players include kids:
+  - Bonuses only ride on a right answer. There's nothing to bet and nothing to lose.
+  - The reels are honest random draws, with no staged near-misses.
+  - Full-screen flashes stay under 3 a second, the threshold for seizure risk.
+  - Reduced motion turns the lights off, and sound can be switched off.
+  - After 25 minutes of play, the game suggests a break.
+  - The bonus is saved the moment you pull, so closing the panel mid-spin loses nothing.
 - **Settings (☰ menu):** text size (Standard, Large, Extra large; Standard is now bigger than before), light or dark colours, and reduced motion.
 - **Free roam:** the atlas with every discovery's story open, plus an endless **When Am I?** (guess the year of a map).
 
