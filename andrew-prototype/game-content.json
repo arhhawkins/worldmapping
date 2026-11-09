@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "note": "Years follow the border data: negative numbers are BCE (-3400 = 3400 BCE). Every item stays \"draft\" until a person has checked it against its sources.",
-  "rewards": { "complete": 30, "firstTry": 10 },
+  "rewards": { "perfect": 40, "retry": 25, "review": 20 },
   "chapters": [
     { "id": "ch1", "title": "Cities, Writing & Early States", "from": -3400, "to": -2500 }
   ],

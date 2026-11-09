@@ -229,9 +229,21 @@ Avoid introducing multiple currencies during the MVP.
 
 These values are placeholders and should be adjusted through playtesting.
 
+**v0.3 (after playtesting): Insight only for right answers.** Playtesters noticed they earned points even when they got challenges wrong, which made the points feel meaningless. The rules are now:
+
+| Result | Insight |
+|---|---:|
+| Right first time (no misses, no hints) | +40 |
+| Right on a second try, or found with hints | +25 |
+| Wrong, or "Show me" | 0 |
+| Review round: a failed challenge answered right first time | +20 (once) |
+| Practice rounds and replays | 0 |
+
+A failed challenge becomes a **review** after the player finishes two other challenges, or straight away if nothing new is left. That keeps rule 6 (never permanently stuck) without paying for wrong answers. Review rounds shuffle the answer order. When Am I? is replayable with new maps: an average of 500+ earns +40 and 250+ earns +25, and beating your earlier tier pays the difference. The build now checks the worst case, where every first attempt is wrong and only reviews pay, and refuses content that would leave a checkpoint unreachable.
+
 ## 4.3 Progression rules
 
-1. Players earn points for completing a new challenge, even when their first answer is incorrect.
+1. ~~Players earn points for completing a new challenge, even when their first answer is incorrect.~~ Replaced in v0.3: points only for right answers, with reviews as the safety net (see the table above).
 2. Correct answers award bonus points.
 3. Every challenge explains the correct answer.
 4. Replaying the same question does not repeatedly generate points.

@@ -30,7 +30,11 @@ Edit `template.html`, not `index.html`. The build fills in the template's placeh
 
 **Open `game.html`**, which is also self-contained. It turns the atlas into a game with two modes:
 
-- **Adventure:** start in 3400 BCE. Tap the pins, play challenges to earn ✦ Insight, and spend 70 to unlock the next checkpoint (3200 BCE, then 3000 BCE). The map sweeps forward and shows what's new. You earn +30 for any new challenge and +10 more for getting it right first time; replays earn nothing. The Journal lists everything, and has Restart.
+- **Adventure:** start in 3400 BCE. Tap the pins, play challenges to earn ✦ Insight, and spend 70 to unlock the next checkpoint (3200 BCE, then 3000 BCE). The map sweeps forward and shows what's new. The Journal lists everything, and has Restart.
+- **Points only for right answers:** +40 for right first time, +25 for a second try or finding it with hints, nothing for a wrong answer or "Show me". A challenge you got wrong comes back as a **review** after two more challenges, worth +20 if you get it right first time. That way nobody can get stuck. Replays and practice rounds earn nothing.
+- **Tap any state** to see what it was like that year: when it appeared, how big it was compared with everyone else, Wikipedia's overview and a gallery of pictures you can open full-size. Each state you look at goes in your **passport** (in the Journal).
+- **Saves (☰ menu):** up to 6 named adventures on one device, so you and Sam can each have your own. **Download** saves one to a file, and **Load from a file** brings it back on any computer or phone as a new save, never overwriting one. Saves from the first version are brought over automatically.
+- **Settings (☰ menu):** text size (Standard, Large, Extra large; Standard is now bigger than before), light or dark colours, and reduced motion.
 - **Free roam:** the atlas with every discovery's story open, plus an endless **When Am I?** (guess the year of a map).
 
 Three mini-games:
@@ -39,7 +43,7 @@ Three mini-games:
 - **Map Detective:** tap a *place* (within a few hundred km counts, and a miss tells you which way to go) or a whole *state* from the border data. It has hints, a list-based alternative and "Show me".
 - **When Am I?:** the map at a secret year, with the year hidden. Guess when it is.
 
-Progress saves in the browser (`localStorage`), so a refresh or coming back later picks up where you left off.
+Progress saves automatically in the browser (`localStorage`). The descriptions and pictures in the state panel come live from Wikipedia, so they need an internet connection; everything else works offline. Wikipedia text is CC BY-SA, and each picture links to its source and licence. Pictures are whatever the article uses, so some show maps, later ruins or modern reconstructions, and the panel says so.
 
 ### Files
 
@@ -54,12 +58,13 @@ Progress saves in the browser (`localStorage`), so a refresh or coming back late
 python3 tools/build_andrew_prototype.py --fast
 ```
 
-`--fast` reuses the processed borders in `raw/build-cache/` and takes a few seconds; the first build takes about 2 minutes. The build checks `game-content.json` first and stops with a list of problems if it finds any: missing sources, a state target that isn't on the map at its checkpoint, a When Am I? range that would show the future, or a checkpoint that a player could never earn enough Insight to unlock.
+`--fast` reuses the processed borders in `raw/build-cache/` and takes a few seconds; the first build takes about 2 minutes. The build checks `game-content.json` first and stops with a list of problems if it finds any: missing sources, a state target that isn't on the map at its checkpoint, a When Am I? range that would show the future, or a checkpoint a player couldn’t reach even after getting every challenge wrong and then reviewing it.
 
 ### Game rough spots
 
 - Only Chapter 1's first three checkpoints exist, and no content has been fact-checked yet.
-- Then / Now, the History Passport and optional unlocks aren't built. Insight left over at 3000 BCE has nothing to spend it on yet.
+- Then / Now and optional unlocks aren't built. Insight left over at 3000 BCE has nothing to spend it on yet.
+- The state panel describes each state as a whole, from its Wikipedia article, not specifically the year on the map.
 - Before 3000 BCE the border data has very few states, so When Am I? in Chapter 1 is mostly reading whether Elam, Egypt and the Indus have appeared.
 - The map code is duplicated between `template.html` and `game-template.html`. Two fixes made for the game also apply to the atlas, but haven't been copied there: keeping the view on resize or rotation, and skipping waterlines while the map moves.
 

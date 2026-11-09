@@ -206,9 +206,17 @@ def validate_content(content, polities):
         else:
             errs.append(f"{cid}: unknown type {kind}")
 
-    # No dead ends: counting only the base reward (every answer wrong), the Insight available
-    # before each checkpoint must cover all the unlock costs up to and including it.
-    base = content["rewards"]["complete"]
+    rw = content.get("rewards", {})
+    if not all(isinstance(rw.get(k), int) for k in ("perfect", "retry", "review")):
+        errs.append("rewards needs whole numbers for perfect, retry and review")
+        return errs
+    if not rw["perfect"] >= rw["retry"] >= rw["review"] > 0:
+        errs.append("rewards must go perfect >= retry >= review > 0")
+
+    # No dead ends. Worst case: a player gets every challenge wrong at first, earns nothing,
+    # then gets each one right in its review round. The Insight from those reviews before
+    # each checkpoint must still cover all the unlock costs up to and including it.
+    base = rw["review"]
     earned = spent = 0
     for i in range(1, len(cps)):
         earned += count[i - 1] * base
