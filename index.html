@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Worldmapping prototype</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+  :root { --paper:#F4EEDF; --ink:#3F362C; --sea:#CBDDE0; --rule:#7B6A58; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:var(--paper); color:var(--ink); font-family:'EB Garamond', 'Palatino Linotype', Palatino, serif; overflow:hidden; }
+  #wrap { position:fixed; inset:0; display:flex; flex-direction:column; }
+  #mapbox { position:relative; flex:1; margin:14px 14px 0; border:2px solid var(--ink); outline:1px solid var(--ink); outline-offset:5px; background:var(--sea); }
+  canvas { position:absolute; inset:0; width:100%; height:100%; display:block; cursor:grab; touch-action:none; }
+  #cartouche { position:absolute; left:16px; top:14px; background:var(--paper); border:1px solid var(--ink); padding:8px 16px 6px; text-align:center; pointer-events:none; }
+  #cartouche .t { font-size:13px; letter-spacing:.35em; }
+  #year { font-size:34px; line-height:1.05; letter-spacing:.06em; font-weight:600; }
+  #count { font-size:13px; font-style:italic; opacity:.75; }
+  #card { position:absolute; right:16px; top:14px; width:min(300px, 60vw); background:var(--paper); border:1px solid var(--ink); padding:12px 16px; display:none; }
+  #card h2 { margin:0 0 4px; font-size:19px; letter-spacing:.12em; text-transform:uppercase; font-weight:600; }
+  #card p { margin:4px 0; font-size:15px; }
+  #card a { color:#6B4A2E; }
+  #card .x { position:absolute; right:8px; top:4px; border:0; background:none; font:inherit; font-size:20px; cursor:pointer; color:var(--ink); }
+  #bar { padding:14px 22px 16px; display:flex; align-items:center; gap:12px; }
+  #bar button { font:inherit; font-size:17px; background:var(--paper); color:var(--ink); border:1px solid var(--ink); border-radius:6px; min-width:44px; height:40px; cursor:pointer; }
+  #track { position:relative; flex:1; height:44px; }
+  #slider { position:absolute; left:0; right:0; top:4px; width:100%; margin:0; accent-color:#9C5B4A; height:24px; }
+  #ticks { position:absolute; left:0; right:0; top:28px; height:16px; font-size:12px; font-style:italic; }
+  #ticks span { position:absolute; transform:translateX(-50%); white-space:nowrap; opacity:.8; }
+  #loading { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:22px; font-style:italic; letter-spacing:.1em; }
+  #credit { position:absolute; left:16px; bottom:8px; font-size:11px; font-style:italic; opacity:.7; }
+  #credit a { color:inherit; }
+  @media (max-width:600px) { #year { font-size:26px; } #bar { padding:10px 10px 12px; gap:6px; } #bar button { min-width:38px; } #ticks span.m { display:none; } }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="mapbox">
+    <canvas id="map"></canvas>
+    <div id="cartouche"><div class="t">THE WORLD IN</div><div id="year">—</div><div id="count"></div></div>
+    <div id="card"><button class="x" aria-label="Close">×</button><h2 id="cname"></h2><p id="cyears"></p><p id="clink"></p></div>
+    <div id="loading">Unrolling the map…</div>
+    <div id="credit">Borders: <a href="https://github.com/Seshat-Global-History-Databank/cliopatria">Cliopatria</a>, Seshat Databank, CC BY 4.0 · prototype, simplified shapes</div>
+  </div>
+  <div id="bar">
+    <button id="prev" title="Previous border change" aria-label="Previous border change">‹</button>
+    <button id="play" title="Play" aria-label="Play">▶</button>
+    <button id="next" title="Next border change" aria-label="Next border change">›</button>
+    <div id="track"><input id="slider" type="range" min="0" max="10000" value="0" aria-label="Year"><div id="ticks"></div></div>
+  </div>
+</div>
+<script>
+(async () => {
+  const Y0 = -3400, Y1 = 2024, SPAN = Y1 - Y0;
+  const yearAt = t => Math.round(Y1 - SPAN * Math.pow(1 - t, 2));      // stretched toward the present
+  const tAt = y => 1 - Math.sqrt(Math.max(0, Y1 - y) / SPAN);
+  const fmt = y => y < 0 ? `${-y} BCE` : y === 0 ? '1 BCE' : `${y} CE`;
+  const PAL = ['#F1DFA0', '#C9D9A8', '#D2C4DE', '#F2CDA4', '#B9D5C9', '#E8B0A8', '#E6D2B0'];
+
+  const canvas = document.getElementById('map'), ctx = canvas.getContext('2d');
+  const slider = document.getElementById('slider');
+  let data;
+  try { data = await (await fetch('data.json')).json(); }
+  catch (e) { document.getElementById('loading').textContent = 'The map data did not load.'; return; }
+  document.getElementById('loading').remove();
+
+  const Q = data.q, names = data.names, items = data.items;
+  // per-polity span, for the card
+  const span = new Map();
+  for (const it of items) { const s = span.get(it[0]) || [it[1], it[2]]; s[0] = Math.min(s[0], it[1]); s[1] = Math.max(s[1], it[2]); span.set(it[0], s); }
+  // years where any border changes, for ‹ ›
+  const changes = [...new Set(items.flatMap(it => [it[1], it[2] + 1]))].filter(y => y >= Y0 && y <= Y1).sort((a, b) => a - b);
+
+  const decodeRing = r => { const out = []; let x = 0, y = 0; for (let i = 0; i < r.length; i += 2) { x += r[i]; y += r[i + 1]; out.push([x / Q, y / Q]); } return out; };
+  const toGeo = polys => {
+    const coords = polys.map(p => p.map(decodeRing));
+    for (const p of coords) if (d3.geoArea({ type: 'Polygon', coordinates: p }) > 2 * Math.PI) p.forEach(r => r.reverse());
+    return { type: 'MultiPolygon', coordinates: coords };
+  };
+  const geoCache = new Map();
+  const geoOf = it => { let g = geoCache.get(it); if (!g) { g = toGeo(it[6]); geoCache.set(it, g); } return g; };
+  const land = { type: 'MultiPolygon', coordinates: data.land.map(p => p.map(decodeRing)) };
+  for (const p of land.coordinates) if (d3.geoArea({ type: 'Polygon', coordinates: p }) > 2 * Math.PI) p.forEach(r => r.reverse());
+
+  const proj = d3.geoEqualEarth();
+  const path = d3.geoPath(proj, ctx);
+  const grat = d3.geoGraticule().step([15, 15])();
+  let W = 0, H = 0, dpr = 1, tr = d3.zoomIdentity, year = 117, active = [];
+
+  function size() {
+    const r = canvas.getBoundingClientRect(); dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = r.width; H = r.height; canvas.width = W * dpr; canvas.height = H * dpr;
+    proj.fitExtent([[10, 10], [W - 10, H - 10]], { type: 'Sphere' });
+    draw();
+  }
+  function setYear(y) {
+    year = Math.max(Y0, Math.min(Y1, y));
+    active = items.filter(it => it[1] <= year && it[2] >= year);
+    document.getElementById('year').textContent = fmt(year);
+    document.getElementById('count').textContent = `${new Set(active.map(a => a[0])).size} states on the map`;
+    draw();
+  }
+  let raf = 0;
+  function draw() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
+  function render() {
+    const k = tr.k;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#F4EEDF'; ctx.fillRect(0, 0, W, H);
+    ctx.setTransform(dpr * k, 0, 0, dpr * k, dpr * tr.x, dpr * tr.y);
+    ctx.beginPath(); path({ type: 'Sphere' }); ctx.fillStyle = '#CBDDE0'; ctx.fill();
+    ctx.beginPath(); path(grat); ctx.strokeStyle = 'rgba(120,150,156,.45)'; ctx.lineWidth = 0.6 / k; ctx.stroke();
+    // engraved water lines along the coasts
+    ctx.beginPath(); path(land); ctx.lineJoin = 'round';
+    [[9, '#D6E5E7'], [6, '#C3D8DB'], [3.5, '#D6E5E7'], [1.8, '#5E6F73']].forEach(([w, c]) => { ctx.strokeStyle = c; ctx.lineWidth = w / k; ctx.stroke(); });
+    ctx.fillStyle = '#F3EBD6'; ctx.fill();
+    // states, biggest first so small ones sit on top
+    const sorted = active.slice().sort((a, b) => b[5] - a[5]);
+    for (const it of sorted) {
+      ctx.beginPath(); path(geoOf(it));
+      ctx.fillStyle = PAL[names[it[0]][1] % PAL.length]; ctx.fill();
+      ctx.strokeStyle = '#7B6A58'; ctx.lineWidth = 0.7 / k; ctx.stroke();
+    }
+    if (picked) { const it = active.find(a => a[0] === picked); if (it) { ctx.beginPath(); for (const a of active) if (a[0] === picked) path(geoOf(a)); ctx.strokeStyle = '#3F362C'; ctx.lineWidth = 2.2 / k; ctx.stroke(); } }
+    // labels in screen space
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const boxes = [];
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const seen = new Set();
+    for (const it of sorted) {
+      if (seen.has(it[0])) continue; seen.add(it[0]);
+      const areaPx = it[5] * k * k;            // km², scaled by zoom
+      if (areaPx < 2.2e5 * (W < 700 ? 2.5 : 1)) continue;
+      const p = proj([it[3], it[4]]); if (!p) continue;
+      const x = p[0] * k + tr.x, y = p[1] * k + tr.y;
+      if (x < 20 || x > W - 20 || y < 20 || y > H - 20) continue;
+      const big = areaPx > 6e6, fs = big ? 15 : 11.5;
+      ctx.font = `${big ? 600 : 400} ${fs}px 'EB Garamond', serif`;
+      try { ctx.letterSpacing = big ? '3px' : '1.5px'; } catch (e) {}
+      const txt = names[it[0]][0].toUpperCase(), w = ctx.measureText(txt).width;
+      const b = [x - w / 2 - 4, y - fs, x + w / 2 + 4, y + fs];
+      if (boxes.some(o => !(b[2] < o[0] || o[2] < b[0] || b[3] < o[1] || o[3] < b[1]))) continue;
+      boxes.push(b);
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(247,241,227,.75)'; ctx.strokeText(txt, x, y);
+      ctx.fillStyle = '#3F362C'; ctx.fillText(txt, x, y);
+    }
+    try { ctx.letterSpacing = '0px'; } catch (e) {}
+  }
+
+  // zoom + pan; a tap without dragging picks a state
+  let picked = null, downAt = null;
+  const zoom = d3.zoom().scaleExtent([1, 40]).on('zoom', e => { tr = e.transform; draw(); });
+  d3.select(canvas).call(zoom);
+  canvas.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; });
+  canvas.addEventListener('pointerup', e => {
+    if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+    const r = canvas.getBoundingClientRect();
+    const ll = proj.invert([(e.clientX - r.left - tr.x) / tr.k, (e.clientY - r.top - tr.y) / tr.k]);
+    const hit = ll && active.slice().sort((a, b) => a[5] - b[5]).find(it => d3.geoContains(geoOf(it), ll));
+    picked = hit ? hit[0] : null; showCard(); draw();
+  });
+  function showCard() {
+    const card = document.getElementById('card');
+    if (picked === null) { card.style.display = 'none'; return; }
+    const [nm, , wp] = names[picked], s = span.get(picked);
+    document.getElementById('cname').textContent = nm;
+    document.getElementById('cyears').textContent = `On the map ${fmt(s[0])} to ${s[1] >= 2024 ? 'today' : fmt(s[1])}`;
+    const cl = document.getElementById('clink'); cl.textContent = '';
+    if (wp) { const a = document.createElement('a'); a.href = 'https://en.wikipedia.org/wiki/' + encodeURIComponent(wp.replace(/ /g, '_')); a.textContent = 'Read on Wikipedia'; cl.appendChild(a); }
+    card.style.display = 'block';
+  }
+  document.querySelector('#card .x').onclick = () => { picked = null; showCard(); draw(); };
+
+  // timeline
+  slider.addEventListener('input', () => { stop(); setYear(yearAt(slider.value / 10000)); });
+  const syncSlider = () => { slider.value = Math.round(tAt(year) * 10000); };
+  const ticks = document.getElementById('ticks');
+  [[-3000, 0], [-1000, 1], [1, 0], [500, 1], [1000, 0], [1500, 1], [1800, 0], [2000, 1]].forEach(([y, m]) => {
+    const s = document.createElement('span'); s.textContent = y < 0 ? `${-y} BCE` : y === 1 ? '1 CE' : `${y}`; if (m) s.className = 'm';
+    s.style.left = (tAt(y) * 100) + '%'; ticks.appendChild(s);
+  });
+  document.getElementById('prev').onclick = () => { stop(); const y = [...changes].reverse().find(c => c < year); if (y !== undefined) { setYear(y); syncSlider(); } };
+  document.getElementById('next').onclick = () => { stop(); const y = changes.find(c => c > year); if (y !== undefined) { setYear(y); syncSlider(); } };
+  let timer = null;
+  const playBtn = document.getElementById('play');
+  function stop() { if (timer) { timer.stop(); timer = null; playBtn.textContent = '▶'; } }
+  playBtn.onclick = () => {
+    if (timer) return stop();
+    if (year >= Y1) setYear(Y0);
+    playBtn.textContent = '❚❚';
+    let last = 0;
+    timer = d3.timer(el => { if (el - last < 90) return; last = el; const y = changes.find(c => c > year); if (y === undefined) return stop(); setYear(y); syncSlider(); });
+  };
+
+  window.addEventListener('resize', size);
+  size(); setYear(117); syncSlider();
+})();
+</script>
+</body>
+</html>
