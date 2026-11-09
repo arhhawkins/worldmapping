@@ -137,6 +137,53 @@ function decode(rings,q){
   return rings.map(r=>{const out=[];let x=0,y=0;for(let i=0;i<r.length;i+=2){x+=r[i];y+=r[i+1];out.push([x/q,y/q])}
     const a=out[0],b=out[out.length-1];if(a[0]!==b[0]||a[1]!==b[1])out.push([a[0],a[1]]);return out});
 }
+// Borders come as shared arcs: each border line is stored once and every state that
+// touches it reuses it (see tools/build_andrew_prototype.py), so neighbours always meet exactly.
+// Each arc is smoothed once, so both sides of a border get the very same curve.
+let ARCS=[],RINGS=[],AQ=100;const arcCache=[];
+const CUT=.12; // longest corner cut in degrees, so long straight borders stay straight
+function smoothArc(pts){
+  // Chaikin corner cutting, two passes; the ends stay put so arcs still join up at junctions
+  for(let pass=0;pass<2;pass++){
+    const n=pts.length; if(n<3) return pts;
+    const out=[pts[0]];
+    for(let i=0;i<n-1;i++){
+      const a=pts[i],b=pts[i+1],dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);
+      if(!len||Math.abs(dx)>180){if(i>0)out.push(a);continue}
+      const t=Math.min(.25,CUT/len);
+      if(i>0) out.push([a[0]+dx*t,a[1]+dy*t]);
+      if(i<n-2) out.push([b[0]-dx*t,b[1]-dy*t]);
+    }
+    out.push(pts[n-1]); pts=out;
+  }
+  return pts;
+}
+function arcPts(i){
+  let c=arcCache[i];
+  if(!c){
+    const r=ARCS[i];c=[];let x=0,y=0;
+    for(let j=0;j<r.length;j+=2){x+=r[j];y+=r[j+1];c.push([x/AQ,y/AQ])}
+    c=arcCache[i]=smoothArc(c);
+  }
+  return c;
+}
+function addArc(out,ref){
+  const pts=arcPts(ref<0?~ref:ref),n=pts.length;
+  if(ref<0){for(let j=out.length?n-2:n-1;j>=0;j--)out.push(pts[j])}
+  else{for(let j=out.length?1:0;j<n;j++)out.push(pts[j])}
+}
+function ringOf(k){
+  const out=[];
+  for(const t of RINGS[k]){
+    if(Array.isArray(t)){const s=t[0],c=t[1],step=Math.sign(c);for(let j=0;j<Math.abs(c);j++)addArc(out,s+j*step)}
+    else addArc(out,t);
+  }
+  const a=out[0],b=out[out.length-1];
+  if(a&&(a[0]!==b[0]||a[1]!==b[1]))out.push(a);
+  return out.length>=4?out:null; // a speck smaller than the 1 km grid: skip it
+}
+// a state's polygons, minus any rings too small to draw
+function polysOf(polys){return polys.map(p=>p.map(ringOf)).filter(p=>p[0]).map(p=>p.filter(Boolean))}
 // rewind so d3's spherical polygons read as small areas (exterior clockwise in d3's convention)
 function fixWinding(geom){
   geom.coordinates.forEach(poly=>{
@@ -150,6 +197,7 @@ function load(){
   const L=JSON.parse(document.getElementById('landdata').textContent);
   names=P.names.map(n=>n); wiki=P.wiki; colorIdx=P.color;
   const q=P.q; Q=q;
+  ARCS=P.arcs; RINGS=P.rings; AQ=P.aq;
   span=names.map(()=>[Infinity,-Infinity]);
   const cy=new Set();
   feats=P.f.map(([n,a,b,polys])=>{
@@ -166,8 +214,7 @@ function load(){
 
 function geomOf(f){
   if(!f.geom){
-    const q=Q;
-    f.geom=fixWinding({type:'MultiPolygon',coordinates:f.polys.map(p=>decode(p,q))});
+    f.geom=fixWinding({type:'MultiPolygon',coordinates:polysOf(f.polys)});
     f.polys=null;
   }
   return f.geom;
@@ -242,7 +289,7 @@ function draw(){
   for(const f of active){
     ctx.fillStyle=theme.pal[colorIdx[f.n]%8];
     ctx.globalAlpha=f.n===selected?1:.92;
-    ctx.fill(f.path,'evenodd');
+    ctx.fill(f.path,'nonzero');
   }
   ctx.globalAlpha=1; ctx.strokeStyle=theme.border; ctx.lineWidth=.6/k; ctx.lineJoin='round';
   for(const f of active) ctx.stroke(f.path);
@@ -327,7 +374,7 @@ canvas.addEventListener('click',e=>{
   const [px,py]=transform.invert([e.clientX-r.left,e.clientY-r.top]);
   ctx.setTransform(1,0,0,1,0,0);
   let hit=-1;
-  for(let i=active.length-1;i>=0;i--){ if(ctx.isPointInPath(active[i].path,px,py,'evenodd')){hit=active[i].n;break} }
+  for(let i=active.length-1;i>=0;i--){ if(ctx.isPointInPath(active[i].path,px,py,'nonzero')){hit=active[i].n;break} }
   if(hit>=0) showInfo(hit); else hideInfo();
 });
 document.getElementById('close').onclick=hideInfo;

@@ -27,7 +27,7 @@ import json
 import sys
 from pathlib import Path
 
-from shapely.geometry import shape, mapping
+from shapely.geometry import shape
 from shapely.strtree import STRtree
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -42,16 +42,16 @@ CACHE = ROOT / "raw/build-cache"
 D3 = ROOT / "raw/d3.min.js"
 MAX_BYTES = 10_000_000
 
-Q = 20             # coordinate grid: degrees x 20, so 0.05 degree steps
+Q = 20             # coastline grid: degrees x 20, so 0.05 degree steps
+AQ = 100           # border grid: degrees x 100, so 0.01 degree steps (about 1 km)
 COLOURS = 8        # size of the atlas palette
-TOL_BIG, TOL_SMALL = 0.2, 0.09   # simplification, degrees (keeps the page under 10 MB)
 
 
-def encode(ring):
-    """First point, then the step to each next point, on the Q grid."""
+def encode(ring, q=Q):
+    """First point, then the step to each next point, on the q grid."""
     out, px, py = [], 0, 0
     for x, y in ring:
-        X, Y = round(x * Q), round(y * Q)
+        X, Y = round(x * q), round(y * q)
         if out and X == px and Y == py:
             continue
         out += [X - px, Y - py]
@@ -59,10 +59,107 @@ def encode(ring):
     return out
 
 
-def simplify_ring(coords, n_points):
-    line = shape({"type": "LineString", "coordinates": coords})
-    tol = TOL_BIG if n_points > 40 else TOL_SMALL
-    return list(line.simplify(tol).coords)
+def clean_ring(ring):
+    """Ring as (x, y) tuples, with repeats and the closing point dropped."""
+    out = []
+    for x, y in ring:
+        pt = (x, y)
+        if not out or out[-1] != pt:
+            out.append(pt)
+    if len(out) > 1 and out[0] == out[-1]:
+        out.pop()
+    return out
+
+
+def oriented(ring, ccw):
+    """Outer rings counter-clockwise, holes clockwise, so the page can fill with the
+    nonzero rule: parts of one state that overlap then merge instead of cancelling out."""
+    area = sum(x0 * y1 - x1 * y0 for (x0, y0), (x1, y1) in zip(ring, ring[1:] + ring[:1]))
+    return ring if (area > 0) == ccw else ring[::-1]
+
+
+class Topology:
+    """Store every border line once, at full detail, the way TopoJSON does.
+
+    Cliopatria's shapes are cut from one shared mesh: neighbours and a state's
+    successive years reuse the exact same points. So each ring is split at the
+    junctions (points where three or more lines meet) into arcs, and each arc is
+    kept once. Neighbours then draw the very same line, so no slivers or gaps
+    open between them, and the page can afford the source's full detail.
+    """
+
+    def __init__(self, rings):
+        links = collections.defaultdict(set)
+        for r in rings:
+            for i, a in enumerate(r):
+                b = r[(i + 1) % len(r)]
+                links[a].add(b)
+                links[b].add(a)
+        self.junction = {pt for pt, s in links.items() if len(s) != 2}
+        self.arcs, self.arc_index = [], {}
+        self.rings, self.ring_index = [], {}
+
+    def _arc(self, chain):
+        fwd = tuple(chain)
+        rev = fwd[::-1]
+        key = min(fwd, rev)
+        if key not in self.arc_index:
+            self.arc_index[key] = len(self.arcs)
+            self.arcs.append(key)
+        i = self.arc_index[key]
+        return i if key == fwd else ~i
+
+    def _loop(self, ring):
+        """A ring with no junctions is one closed arc, started at its lowest point."""
+        def canon(c):
+            m = min(range(len(c)), key=c.__getitem__)
+            return c[m:] + c[:m]
+        fwd, rev = canon(ring), canon(ring[::-1])
+        key = tuple(min(fwd, rev)) + (min(fwd, rev)[0],)
+        if key not in self.arc_index:
+            self.arc_index[key] = len(self.arcs)
+            self.arcs.append(key)
+        i = self.arc_index[key]
+        return [i if fwd <= rev else ~i]
+
+    def ring(self, ring):
+        """Index of this ring in the shared ring list (each ring is a list of arc refs)."""
+        cuts = [i for i, pt in enumerate(ring) if pt in self.junction]
+        if not cuts:
+            refs = self._loop(ring)
+        else:
+            s = cuts[0]
+            r = ring[s:] + ring[:s] + [ring[s]]
+            cuts = [i for i, pt in enumerate(r) if pt in self.junction]
+            refs = [self._arc(r[a:b + 1]) for a, b in zip(cuts, cuts[1:])]
+        key = tuple(refs)
+        if key not in self.ring_index:
+            self.ring_index[key] = len(self.rings)
+            self.rings.append(refs)
+        return self.ring_index[key]
+
+    def encoded_arcs(self):
+        return [encode(a, AQ) for a in self.arcs]
+
+    def encoded_rings(self):
+        """Runs of neighbouring arc refs (5,6,7 or ~7,~6,~5) shrink to [first, count]."""
+        out = []
+        for refs in self.rings:
+            enc, i = [], 0
+            while i < len(refs):
+                j, step = i, 0
+                if i + 1 < len(refs) and (refs[i] >= 0) == (refs[i + 1] >= 0) and abs(refs[i + 1] - refs[i]) == 1:
+                    step = refs[i + 1] - refs[i]
+                    while j + 1 < len(refs) and refs[j + 1] - refs[j] == step:
+                        j += 1
+                enc.append([refs[i], (j - i + 1) * step] if j > i else refs[i])
+                i = j + 1
+            out.append(enc)
+        return out
+
+
+def polygons(geometry):
+    return [geometry["coordinates"]] if geometry["type"] == "Polygon" else geometry["coordinates"]
 
 
 def build_polities():
@@ -71,7 +168,21 @@ def build_polities():
     names, index, wiki = [], {}, []
     items, buffered, meta = [], [], []
 
+    shapes = []   # per feature: polygons of cleaned rings
     for f in feats:
+        polys = []
+        for poly in polygons(f["geometry"]):
+            rings = [clean_ring(r) for r in poly]
+            if len(rings[0]) < 3:
+                continue
+            rings = [oriented(r, i == 0) for i, r in enumerate(rings) if len(r) >= 3]
+            polys.append(rings)
+        shapes.append(polys)
+    topo = Topology([r for polys in shapes for poly in polys for r in poly])
+
+    for f, polys in zip(feats, shapes):
+        if not polys:
+            continue
         p = f["properties"]
         name = p["Name"]
         if name not in index:
@@ -81,28 +192,12 @@ def build_polities():
         g = shape(f["geometry"])
         if not g.is_valid:
             g = g.buffer(0)
-        first = g.simplify(0.04 if p["Area"] > 20000 else 0.015, preserve_topology=True)
-        if first.is_empty:
+        if g.is_empty:
             continue
         buffered.append(g.buffer(0.05))
         meta.append((index[name], p["FromYear"], p["ToYear"]))
-
-        m = mapping(first)
-        polys = [m["coordinates"]] if m["type"] == "Polygon" else m["coordinates"]
-        out_polys = []
-        for poly in polys:
-            rings = []
-            for ring in poly:
-                ring = [list(pt) for pt in ring]
-                if len(ring) < 4:
-                    continue
-                enc = encode(simplify_ring(ring, len(ring)))
-                if len(enc) >= 8:
-                    rings.append(enc)
-            if rings:
-                out_polys.append(rings)
-        if out_polys:
-            items.append([index[name], p["FromYear"], p["ToYear"], out_polys])
+        items.append([index[name], p["FromYear"], p["ToYear"],
+                      [[topo.ring(r) for r in poly] for poly in polys]])
 
     # Colour so that states touching at the same time never share a colour,
     # and each state keeps one colour for its whole life.
@@ -130,6 +225,9 @@ def build_polities():
         "color": [colour.get(i, 0) for i in range(len(names))],
         "f": items,
         "q": Q,
+        "aq": AQ,
+        "arcs": topo.encoded_arcs(),
+        "rings": topo.encoded_rings(),
     }
 
 
@@ -242,7 +340,7 @@ def write(path, page):
     size = path.stat().st_size
     print(f"Wrote {path.relative_to(ROOT)} ({size / 1e6:.2f} MB)")
     if size >= MAX_BYTES:
-        raise SystemExit(f"{path.name} is {size / 1e6:.2f} MB, over the 10 MB limit: raise TOL_BIG/TOL_SMALL")
+        raise SystemExit(f"{path.name} is {size / 1e6:.2f} MB, over the 10 MB limit: lower AQ")
 
 
 def main():

@@ -6,7 +6,8 @@ A second take on Sam's prototype in the repo root. It works the same way: Cliopa
 
 ## How it differs from Sam's version
 
-- **One self-contained file.** The border data, coastlines and d3 are all inside `index.html` (about 9.6 MB). Sam's version loads `data.json` with `fetch`, so it needs a server.
+- **One self-contained file.** The border data, coastlines and d3 are all inside `index.html` (about 7.8 MB).
+- **Full-detail, smooth borders.** Cliopatria's shapes share one mesh, so the build stores each border line once (like TopoJSON) at full source detail on a 0.01° grid, and the page smooths each line once. Neighbours draw the very same curve, so no slivers or gaps open between them, even fully zoomed in. Sam's version loads `data.json` with `fetch`, so it needs a server.
 - **Natural Earth coastlines** (50m land, public domain) replace the historical-basemaps placeholder, whose licence doesn't suit a product we sell.
 - **Opens on 117 CE**, framed on the Old World from the Atlantic to China, so the Roman Empire at its height fills the screen.
 - **Engraved-style waterlines:** several thin strokes follow each coast out to sea, like an old printed atlas.
