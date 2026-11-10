@@ -19,7 +19,7 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --paper:#1f1c18; --land:#2b2721; --sea:#1b2427; --water:#33464c; --border:#0f0d0b;
+    --paper:#1f1c18; --land:#3a332a; --sea:#1b2427; --water:#33464c; --border:#0f0d0b;
     --ink:#eadfc8; --ink-soft:#b3a68f; --panel:rgba(32,29,25,.96); --rule:#4a4237;
     --accent:#e09a7f; --label:#f1e6cf; --halo:rgba(20,18,15,.8);
     --ok:#9cc78f; --okbg:#2b3a26; --bad:#e8957f; --badbg:#46271f; --gold:#e2bd62; --goldbg:#3d321a;
@@ -28,7 +28,7 @@
   }
 }
 :root[data-theme="dark"]{
-  --paper:#1f1c18; --land:#2b2721; --sea:#1b2427; --water:#33464c; --border:#0f0d0b;
+  --paper:#1f1c18; --land:#3a332a; --sea:#1b2427; --water:#33464c; --border:#0f0d0b;
   --ink:#eadfc8; --ink-soft:#b3a68f; --panel:rgba(32,29,25,.96); --rule:#4a4237;
   --accent:#e09a7f; --label:#f1e6cf; --halo:rgba(20,18,15,.8);
   --ok:#9cc78f; --okbg:#2b3a26; --bad:#e8957f; --badbg:#46271f; --gold:#e2bd62; --goldbg:#3d321a;
@@ -204,6 +204,7 @@ body.busy #controls{display:none}
 :root[data-vegas] .pin{background:#ff4f9a;box-shadow:0 0 10px #ff4f9a}
 :root[data-vegas] .pin[data-state="done"]{background:var(--ok);box-shadow:0 0 10px var(--ok)}
 :root[data-vegas] .claim.true{background:var(--okbg)} :root[data-vegas] .claim.lie{background:var(--badbg)}
+#satBtn[aria-pressed="true"]{background:#1d4f6e;color:#fff;border-color:#6fb3d9}
 #vegasBtn[aria-pressed="true"]{background:linear-gradient(#ffe27a,#f0a81c);color:#2a1300;border-color:#ffd34d}
 #flash{position:fixed;inset:0;pointer-events:none;z-index:15;background:radial-gradient(circle at 50% 45%,rgba(255,220,90,.5),rgba(255,80,160,.14) 60%,transparent 82%);opacity:0}
 #flash.go{animation:flash .42s ease-out}
@@ -322,6 +323,7 @@ html[data-motion="reduce"] #vbanner.show{animation:none;opacity:1}
         <button id="mFree" aria-pressed="false">Free roam</button>
       </div>
       <button class="ctl" id="journalBtn">Journal</button>
+      <button class="ctl" id="satBtn" aria-pressed="true" aria-label="Satellite map" title="Satellite map">🛰</button>
       <button class="ctl" id="vegasBtn" aria-pressed="false" aria-label="Vegas mode" title="Vegas mode">🎰</button>
       <button class="ctl" id="menuBtn" aria-label="Saves and settings">☰</button>
     </div>
@@ -627,21 +629,20 @@ function eventAt(cx,cy){
 }
 
 /* ---------- land detail: relief, lakes, rivers, terrain names ---------- */
-let lakes=null,coast=null,rivers=[],terrain=[],lakesPath=null,coastPath=null,riverPaths=[],reliefImg=null;
+let lakes=null,rivers=[],terrain=[],lakesPath=null,riverPaths=[],reliefImg=null;
 function decodeLine(r,q){const out=[];let x=0,y=0;for(let i=0;i<r.length;i+=2){x+=r[i];y+=r[i+1];out.push([x/q,y/q])}return out}
 function loadLayers(L){
   const q=n=>typeof L.q==='object'?L.q[n]:L.q; // each layer has its own grid
   land=fixWinding({type:'MultiPolygon',coordinates:L.land.map(p=>decode(p,q('land')))});
   lakes=fixWinding({type:'MultiPolygon',coordinates:L.lakes.map(p=>decode(p,q('lakes')))});
-  coast=fixWinding({type:'MultiPolygon',coordinates:L.coast.map(p=>decode(p,q('coast')))});
-  rivers=L.rivers.map(([r,l])=>({r,g:{type:'LineString',coordinates:decodeLine(l,q('rivers'))}}));
+  // rivers are stored coarsely; smoothing them like the borders keeps them free of corners
+  rivers=L.rivers.map(([r,l])=>({r,g:{type:'LineString',coordinates:smoothArc(decodeLine(l,q('rivers')))}}));
   terrain=L.terrain.map(([name,kind,rank,lon,lat,wd])=>({name,kind,rank,ll:[lon,lat],wd}));
   const src=(document.getElementById('relief')||{}).textContent||'';
   if(src.startsWith('data:image')){reliefImg=new Image();reliefImg.onload=()=>{if(typeof redraw==='function')redraw();else draw()};reliefImg.src=src.trim()}
 }
 function buildLayers(){
   lakesPath=new Path2D(); d3.geoPath(projection,lakesPath)(lakes);
-  coastPath=new Path2D(); d3.geoPath(projection,coastPath)(coast);
   riverPaths=[new Path2D(),new Path2D(),new Path2D()];
   for(const r of rivers) d3.geoPath(projection,riverPaths[r.r<=2?0:r.r<=4?1:2])(r.g);
 }
@@ -881,7 +882,7 @@ function drawStateLabels(nameOf,taken){
 // screen areas covered by the year plate and buttons, so labels avoid them
 function uiBoxes(){
   const cr=canvas.getBoundingClientRect(),out=[];
-  for(const el of document.querySelectorAll('#plate,#controls,#insight,#clue')){
+  for(const el of document.querySelectorAll('#plate,#controls,#insight,#clue,#satBtn')){
     const r=el.getBoundingClientRect(); if(!r.width||!r.height) continue;
     out.push([r.left-cr.left-4,r.top-cr.top-4,r.right-cr.left+4,r.bottom-cr.top+4]);
   }
@@ -903,7 +904,7 @@ function drawWaterlines(k){
     const c=cv.getContext('2d'); c.setTransform(DPR*k,0,0,DPR*k,DPR*transform.x,DPR*transform.y);
     c.save(); c.clip(spherePath); c.lineJoin='round';
     const sc=Math.min(1,W/1100)*Math.min(1.6,Math.sqrt(k));
-    const outline=k>=2.5?landPath:coastPath; // zoomed in, the light outline would show its corners
+    const outline=landPath; // the detailed coast, so waterlines never show corners
     for(const [w,a] of [[11,.18],[8,.24],[5.5,.32],[3.2,.45]]){
       c.globalAlpha=a; c.strokeStyle=theme.water; c.lineWidth=w*sc/k; c.stroke(outline);
       c.globalAlpha=1; c.strokeStyle=theme.sea; c.lineWidth=Math.max(.2,(w-1.1)*sc)/k; c.stroke(outline);
@@ -974,6 +975,54 @@ function topFade(){
   const g=ctx.createLinearGradient(0,0,0,h); g.addColorStop(0,theme.paper); g.addColorStop(.55,theme.paper); g.addColorStop(1,'rgba(0,0,0,0)');
   ctx.globalAlpha=.78; ctx.fillStyle=g; ctx.fillRect(0,0,W,h); ctx.restore();
 }
+/* ---------- coasts: countries reach the real shoreline ---------- */
+// Cliopatria draws coasts coarsely (about 25 km steps), so a country's edge can stop short of the
+// real coast (a strip of empty land) or show a corner-y "coastline" of its own. Two fixes:
+// 1. border lines are drawn only where two countries meet, or inland; never along a coast;
+// 2. near the coast, each country's colour spreads into the empty strip up to the real shoreline.
+let COASTAL=new Set();
+function loadCoastal(gaps){COASTAL=new Set();let i=0;for(const g of gaps||[]){i+=g;COASTAL.add(i)}}
+function ringArcs(k){const out=[];for(const t of RINGS[k]){if(Array.isArray(t)){const s=t[0],c=t[1],st=Math.sign(c);for(let j=0;j<Math.abs(c);j++)out.push(s+j*st)}else out.push(t)}return out.map(r=>r<0?~r:r)}
+function arcsOf(f){if(!f.arcs){const set=new Set();for(const p of f.rp)for(const k of p)for(const a of ringArcs(k))set.add(a);f.arcs=[...set]}return f.arcs}
+let borderKey='',borderPath=null;
+function bordersPath(){
+  const key=W+'x'+H+'|'+active.map(f=>f.n+'.'+f.a).join(',');
+  if(key===borderKey) return borderPath;
+  const use=new Map(); // arc -> the country using it, or -1 once two different countries share it
+  for(const f of active) for(const a of arcsOf(f)){const u=use.get(a);if(u===undefined)use.set(a,f.n);else if(u!==f.n)use.set(a,-1)}
+  if(arcProj.key!==W+'x'+H){arcProj.key=W+'x'+H;arcProj.c=new Map()}
+  borderPath=new Path2D();
+  for(const [a,u] of use){
+    if(u!==-1&&COASTAL.has(a)) continue;
+    let pts=arcProj.c.get(a);
+    if(!pts){pts=arcPts(a).map(p=>projection(p));arcProj.c.set(a,pts)} // projected once per screen size
+    for(let i=0;i<pts.length;i++){
+      const p=pts[i]; if(!p) continue;
+      if(i===0||!pts[i-1]||Math.abs(p[0]-pts[i-1][0])>W/3) borderPath.moveTo(p[0],p[1]); else borderPath.lineTo(p[0],p[1]); // no lines across the date line
+    }
+  }
+  borderKey=key; return borderPath;
+}
+const arcProj={key:'',c:new Map()};
+// Like the relief, the spread is drawn once per view and year and reused while the map moves.
+const bleed={key:'',cv:null,pending:'',since:0,t:0,T:null};
+const BLEED_DEG=.3;
+function drawCoastBleed(alpha){
+  const key=viewKey()+'|'+theme.pal.join()+'|'+active.map(f=>f.n+'.'+f.a).join(',');
+  if(settled(bleed,key)===false){
+    const k=transform.k,w=(projection([1,0])[0]-projection([0,0])[0])*BLEED_DEG;
+    const cv=bleed.cv||document.createElement('canvas'); cv.width=canvas.width; cv.height=canvas.height;
+    const c=cv.getContext('2d');
+    c.setTransform(DPR*k,0,0,DPR*k,DPR*transform.x,DPR*transform.y); c.lineJoin='round'; c.lineWidth=2*w;
+    for(const f of active){c.strokeStyle=theme.pal[colorIdx[f.n]%8];c.stroke(f.path)} // smaller countries last, so they win
+    c.globalCompositeOperation='destination-out'; c.fillStyle='#000';
+    for(const f of active) c.fill(f.path,'nonzero');      // only the empty strips, never on top of a country
+    c.globalCompositeOperation='destination-in'; c.strokeStyle='#000'; c.lineWidth=2*w;
+    c.stroke(landPath);                                    // and only near the real coast
+    bleed.cv=cv; bleed.key=key; bleed.T={x:transform.x,y:transform.y,k:transform.k};
+  }
+  if(bleed.cv) drawCached(bleed,'source-over',alpha);
+}
 let soonT=0; function redrawSoon(){if(!soonT)soonT=setTimeout(()=>{soonT=0;(typeof redraw==='function'?redraw:draw)()},30)}
 function fixWinding(geom){
   geom.coordinates.forEach(poly=>{if(d3.geoArea({type:'Polygon',coordinates:poly})>2*Math.PI) poly.forEach(r=>r.reverse())});
@@ -983,9 +1032,9 @@ function loadData(){
   const P=JSON.parse($('polities').textContent), L=JSON.parse($('landdata').textContent);
   names=P.names; wiki=P.wiki; colorIdx=P.color; Q=P.q; ARCS=P.arcs; RINGS=P.rings; AQ=P.aq;
   span=names.map(()=>[Infinity,-Infinity]); const cy=new Set();
-  feats=P.f.map(([n,a,b,polys])=>{span[n][0]=Math.min(span[n][0],a);span[n][1]=Math.max(span[n][1],b);cy.add(a);cy.add(b+1);return {n,a,b,polys,geom:null,path:null,area:0,lab:null}});
+  feats=P.f.map(([n,a,b,polys])=>{span[n][0]=Math.min(span[n][0],a);span[n][1]=Math.max(span[n][1],b);cy.add(a);cy.add(b+1);return {n,a,b,polys,rp:polys,geom:null,path:null,area:0,lab:null}});
   changeYears=[...cy].filter(y=>y>=YMIN&&y<=YMAX).sort((x,y)=>x-y);
-  loadLayers(L); loadEvents(); loadAliases(P.alias);
+  loadLayers(L); loadEvents(); loadAliases(P.alias); loadCoastal(P.coastal);
   grat=d3.geoGraticule10();
 }
 function geomOf(f){if(!f.geom){f.geom=fixWinding({type:'MultiPolygon',coordinates:polysOf(f.polys)});f.polys=null}return f.geom}
@@ -1041,10 +1090,11 @@ function draw(){
   ctx.fillStyle=theme.land; ctx.fill(landPath);
   ctx.save(); ctx.clip(landPath);
   const satel=satOn()&&drawSatellite(); // real terrain under see-through country colours
+  drawCoastBleed(satel?.42:.92);
   for(const f of active){ctx.fillStyle=theme.pal[colorIdx[f.n]%8];ctx.globalAlpha=satel?.42:.92;ctx.fill(f.path,'nonzero')}
   ctx.globalAlpha=1; if(!satel) drawRelief(); drawWater(k);
   ctx.globalAlpha=1; ctx.strokeStyle=theme.border; ctx.lineWidth=.6/k; ctx.lineJoin='round';
-  for(const f of active) ctx.stroke(f.path);
+  ctx.stroke(bordersPath());
   if(selectedState>=0){ctx.strokeStyle=theme.accent;ctx.lineWidth=2/k;for(const f of active) if(f.n===selectedState) ctx.stroke(f.path)}
   ctx.restore();
   ctx.strokeStyle=theme.border; ctx.globalAlpha=.7; ctx.lineWidth=.55/k; ctx.stroke(landPath); ctx.globalAlpha=1;
@@ -1407,6 +1457,7 @@ function applySettings(){
   if(st.motion==='reduce') root.dataset.motion='reduce'; else delete root.dataset.motion;
   if(st.vegas==='on') root.dataset.vegas=''; else delete root.dataset.vegas;
   $('vegasBtn').setAttribute('aria-pressed',st.vegas==='on');
+  $('satBtn').setAttribute('aria-pressed',st.mapstyle!=='classic');
   readTheme();
   if(W) requestAnimationFrame(()=>resize()); // bigger text makes the bars taller
 }
@@ -1650,7 +1701,7 @@ function endWAI(silent){
   const a=activity; activity=null; document.body.classList.remove('busy'); setControlsEnabled(true);
   setYear(mode==='adventure'?CPS[S.cp].year:a.returnYear); if(silent!==true) closePanel(); renderAdv();
 }
-function setControlsEnabled(on){['mAdv','mFree','journalBtn','menuBtn','vegasBtn','spinsBtn','prev','play','next','slider','waiBtn','advance'].forEach(id=>$(id).disabled=!on);$('cptrack').querySelectorAll('button').forEach(b=>b.disabled=!on)}
+function setControlsEnabled(on){['mAdv','mFree','journalBtn','menuBtn','satBtn','vegasBtn','spinsBtn','prev','play','next','slider','waiBtn','advance'].forEach(id=>$(id).disabled=!on);$('cptrack').querySelectorAll('button').forEach(b=>b.disabled=!on)}
 
 /* ---------- Vegas mode: lights, sounds and bonus spins on right answers ---------- */
 // Ground rules, because the players include kids:
@@ -1839,6 +1890,10 @@ function renderStreak(){
   if(!show||!n) sb.hidden=true; else{sb.hidden=false;sb.textContent='🎰 '+n+(n===1?' spin waiting':' spins waiting')}
 }
 $('spinsBtn').addEventListener('click',openSpins);
+$('satBtn').onclick=()=>{
+  store.settings.mapstyle=satOn()?'classic':'satellite'; persist(); applySettings();
+  toast(satOn()?'Satellite map: NASA Blue Marble pictures of the land.':'Classic atlas map.'); redraw();
+};
 $('vegasBtn').onclick=()=>{
   if(activity) return;
   store.settings.vegas=vegasOn()?'off':'on'; persist(); applySettings(); renderPlate();

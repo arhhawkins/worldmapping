@@ -6,8 +6,10 @@ A second take on Sam's prototype in the repo root. It works the same way: Cliopa
 
 ## How it differs from Sam's version
 
-- **One self-contained file.** The border data, coastlines, relief, events and d3 are all inside `index.html` (about 9.3 MB). Sam's version loads `data.json` with `fetch`, so it needs a server.
+- **One self-contained file.** The border data, coastlines, relief, events and d3 are all inside `index.html` (about 9.2 MB). Sam's version loads `data.json` with `fetch`, so it needs a server.
 - **Full-detail, smooth borders.** Cliopatria's shapes share one mesh, so the build stores each border line once (like TopoJSON) at full source detail on a 0.01° grid, and the page smooths each line once. Neighbours draw the very same curve, so no slivers or gaps open between them, even fully zoomed in. Cliopatria's "(Name)" composite rows, which repeat other rows, are left out.
+- **Countries reach the real coast.** Cliopatria draws coastlines coarsely (about 25 km steps), which left strips of empty land and corner-y outlines along every coast. The build marks which border pieces are really coastline. The page draws border lines only where two countries meet or inland, and spreads each country's colour up to the true Natural Earth shoreline (within about 30 km of it). Waterlines follow the detailed coast at every zoom, and rivers are smoothed.
+- **🛰 Satellite button** on the map (both pages) switches between NASA satellite terrain and the classic atlas look.
 - **2026.** The border data stops at 2024; its last borders carry on to 2026.
 - **Satellite terrain:** the land shows NASA's Blue Marble satellite imagery with shaded relief (public domain), streamed as tiles from NASA GIBS, so it stays sharp down to about 500 m a pixel. Country colours sit on top as a see-through tint. It needs an internet connection; offline, the map falls back to grey shaded relief. In the game, ☰ › Settings › Map style switches between Satellite and Classic atlas. (Google Maps imagery isn't used: its terms don't allow putting its tiles on another map.)
 - **Land detail:** Natural Earth 10m coastlines and lakes, kept fine (about 0.5 km) so shores stay smooth fully zoomed in. The Great Lakes are water now. Rivers appear as you zoom in, and mountain ranges, deserts, plateaus and plains are named.

@@ -57,8 +57,8 @@ MAX_BYTES = 10_000_000
 Q = 20             # coastline grid: degrees x 20, so 0.05 degree steps
 AQ = 100           # border grid: degrees x 100, so 0.01 degree steps (about 1 km)
 # Grids (steps per degree) for the land layers: fine for coasts and lakes so they stay smooth
-# fully zoomed in, coarser for rivers and the light waterline outline.
-LAND_Q = {"land": 200, "lakes": 100, "rivers": 50, "coast": 50}
+# fully zoomed in, coarser for rivers (the page smooths those).
+LAND_Q = {"land": 200, "lakes": 100, "rivers": 50}
 COLOURS = 8        # size of the atlas palette
 DATA_END, SHOW_UNTIL = 2024, 2026   # Cliopatria stops at 2024; its last borders carry on to 2026
 # Natural Earth region kinds shown as terrain names, and the label style key for each
@@ -158,6 +158,36 @@ class Topology:
             self.rings.append(refs)
         return self.ring_index[key]
 
+    def coastal_arcs(self, land_path, reach=0.25):
+        """Arcs that are really coastline: some of the arc lies in the sea, or within `reach`
+        degrees of the real (Natural Earth) coast. Cliopatria draws coasts coarsely, so the page
+        hides these lines and lets the true coastline show instead."""
+        import numpy as np
+        import shapely
+        from shapely.ops import unary_union
+        land = unary_union([shape(f["geometry"]).simplify(0.01) for f in json.load(open(land_path))["features"]])
+        segs = []
+        for poly in (land.geoms if land.geom_type == "MultiPolygon" else [land]):
+            for ring in [poly.exterior, *poly.interiors]:
+                c = list(ring.coords)
+                for i in range(0, len(c) - 1, 8):          # short pieces keep the index tight
+                    segs.append(shapely.LineString(c[i:i + 9]))
+        tree = shapely.STRtree(segs)
+        shapely.prepare(land)
+        owner, xs, ys = [], [], []
+        for i, arc in enumerate(self.arcs):
+            n = len(arc)
+            for j in sorted({0 if n < 3 else 1, n // 4, n // 2, (3 * n) // 4, max(0, n - 2)}):
+                owner.append(i)
+                xs.append(arc[j][0])
+                ys.append(arc[j][1])
+        owner = np.array(owner)
+        pts = shapely.points(xs, ys)
+        near = tree.query_nearest(pts, max_distance=reach, return_distance=False, all_matches=False)[0]
+        at_sea = ~shapely.contains_xy(land, np.array(xs), np.array(ys))
+        coastal = set(owner[near].tolist()) | set(owner[at_sea].tolist())
+        return sorted(coastal)
+
     def encoded_arcs(self):
         return [encode(a, AQ) for a in self.arcs]
 
@@ -251,6 +281,8 @@ def build_polities():
         "aq": AQ,
         "arcs": topo.encoded_arcs(),
         "rings": topo.encoded_rings(),
+        # coastal arcs, as gaps between successive indices
+        "coastal": (lambda c: [b - a for a, b in zip([0] + c, c)])(topo.coastal_arcs(LAND)),
     }
 
 
@@ -295,8 +327,6 @@ def build_land():
     return {
         "q": LAND_Q,
         "land": polygon_list(LAND, 0.005, LAND_Q["land"]),
-        # light outline for the wide, soft waterline strokes when zoomed out
-        "coast": polygon_list(LAND, 0.15, LAND_Q["coast"], min_area=0.02),
         "lakes": polygon_list(LAKES, 0.008, LAND_Q["lakes"], min_area=0.002),
         "rivers": rivers,
         "terrain": terrain,
