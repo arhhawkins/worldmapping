@@ -260,7 +260,7 @@ function eventAt(cx,cy){
 }
 
 /* ---------- land detail: relief, lakes, rivers, terrain names ---------- */
-let lakes=null,rivers=[],terrain=[],lakesPath=null,riverPaths=[],reliefImg=null;
+let lakes=null,rivers=[],terrain=[],riverNames=[],lakeNames=[],lakesPath=null,riverPaths=[],reliefImg=null;
 function decodeLine(r,q){const out=[];let x=0,y=0;for(let i=0;i<r.length;i+=2){x+=r[i];y+=r[i+1];out.push([x/q,y/q])}return out}
 function loadLayers(L){
   const q=n=>typeof L.q==='object'?L.q[n]:L.q; // each layer has its own grid
@@ -268,6 +268,7 @@ function loadLayers(L){
   lakes=fixWinding({type:'MultiPolygon',coordinates:L.lakes.map(p=>decode(p,q('lakes')))});
   // rivers are stored coarsely; smoothing them like the borders keeps them free of corners
   rivers=L.rivers.map(([r,l])=>({r,g:{type:'LineString',coordinates:smoothArc(decodeLine(l,q('rivers')))}}));
+  riverNames=L.rivernames||[]; lakeNames=L.lakenames||[];
   terrain=L.terrain.map(([name,kind,rank,lon,lat,wd])=>({name,kind,rank,ll:[lon,lat],wd}));
   const src=(document.getElementById('relief')||{}).textContent||'';
   if(src.startsWith('data:image')){reliefImg=new Image();reliefImg.onload=()=>{if(typeof redraw==='function')redraw();else draw()};reliefImg.src=src.trim()}
@@ -323,10 +324,9 @@ function drawWater(k){
   ctx.globalAlpha=1; ctx.lineCap='butt';
 }
 function drawTerrain(placed){
-  const k=transform.k, ts=theme.ts||1;
+  const k=transform.k, ts=theme.ts||1, ke=k*Math.min(1,W/1000);
   ctx.save(); ctx.globalAlpha=.6;
   for(const t of terrain){
-    const ke=k*Math.min(1,W/1000); // how big the map really is on this screen
     if(t.rank>(ke<.8?0:ke<2.2?1:ke<4?2:ke<8?3:9)) continue;
     const [x,y]=screenAt(t.ll); if(x<-80||y<-20||x>W+80||y>H+20) continue;
     const size=Math.max(10,Math.min(14,11.5-t.rank*.5+Math.log2(k)))*ts;
@@ -339,6 +339,29 @@ function drawTerrain(placed){
     placed.push(box);
     ctx.lineWidth=2.5; ctx.strokeStyle=theme.halo; ctx.lineJoin='round'; ctx.strokeText(txt,x,y);
     ctx.fillStyle=theme.label; ctx.fillText(txt,x,y);
+  }
+  // lakes and rivers, in blue italics
+  ctx.globalAlpha=.9; const blue='#9cc9df';
+  for(const [name,rank,lon,lat,area] of lakeNames){
+    if(rank>(ke<1.2?1:ke<2.5?3:ke<5?6:10)||area*ke*ke<.4) continue;
+    const [x,y]=screenAt([lon,lat]); if(x<0||y<0||x>W||y>H) continue;
+    const size=Math.max(10,Math.min(14,10+Math.log2(ke)))*ts;
+    ctx.font=`italic 400 ${size}px "EB Garamond", Garamond, serif`; if('letterSpacing' in ctx) ctx.letterSpacing='0.5px';
+    const w=ctx.measureText(name).width,box=[x-w/2-2,y-size/2,x+w/2+2,y+size/2];
+    if(box[0]<2||box[2]>W-2||placed.some(b=>!(box[2]<b[0]||box[0]>b[2]||box[3]<b[1]||box[1]>b[3]))) continue;
+    placed.push(box);
+    ctx.lineWidth=2.5; ctx.strokeStyle=theme.halo; ctx.strokeText(name,x,y); ctx.fillStyle=blue; ctx.fillText(name,x,y);
+  }
+  for(const [name,rank,lon,lat,dx,dy] of riverNames){
+    if(rank>(ke<1.5?2:ke<3?4:ke<6?6:10)) continue;
+    const [x,y]=screenAt([lon,lat]),[x2,y2]=screenAt([lon+dx,lat+dy]); if(x<0||y<0||x>W||y>H) continue;
+    let ang=Math.atan2(y2-y,x2-x); if(ang>Math.PI/2)ang-=Math.PI; if(ang<-Math.PI/2)ang+=Math.PI; // never upside down
+    const size=Math.max(10,Math.min(13,9.5+Math.log2(ke)))*ts;
+    ctx.font=`italic 400 ${size}px "EB Garamond", Garamond, serif`; if('letterSpacing' in ctx) ctx.letterSpacing='1px';
+    const w=ctx.measureText(name).width,r=w/2+2,box=[x-r,y-r*Math.abs(Math.sin(ang))-size/2,x+r,y+r*Math.abs(Math.sin(ang))+size/2];
+    if(box[0]<2||box[2]>W-2||placed.some(b=>!(box[2]<b[0]||box[0]>b[2]||box[3]<b[1]||box[1]>b[3]))) continue;
+    placed.push(box);
+    ctx.save(); ctx.translate(x,y); ctx.rotate(ang); ctx.lineWidth=2.5; ctx.strokeStyle=theme.halo; ctx.strokeText(name,0,-3); ctx.fillStyle=blue; ctx.fillText(name,0,-3); ctx.restore();
   }
   ctx.restore(); if('letterSpacing' in ctx) ctx.letterSpacing='0px';
 }
@@ -552,16 +575,21 @@ const satTiles=new Map(), sat={key:'',cv:null,pending:'',since:0,t:0,T:null,any:
 let satFails=0, satLoads=0;
 function satTile(z,r,c){
   const key=z+'/'+r+'/'+c; let t=satTiles.get(key);
+  const url=z==='L'?`sat/m_${r}_${c}.jpg`:SAT_URL(z,r,c);
   if(t){satTiles.delete(key);satTiles.set(key,t);return t} // keep recently used tiles last
   t={img:new Image(),ok:false};
   t.img.crossOrigin='anonymous';
   t.img.onload=()=>{t.ok=true;satLoads++;sat.key='';redrawSoon()};
   t.img.onerror=()=>{t.bad=true;satFails++};
-  t.img.src=SAT_URL(z,r,c); satTiles.set(key,t);
+  t.img.src=url; satTiles.set(key,t);
   if(satTiles.size>500){const old=satTiles.keys().next().value;satTiles.delete(old)}
   return t;
 }
-const satAvailable=()=>!(satFails>12&&satLoads===0); // offline: fall back to the grey relief
+// Pages that can't reach NASA (the shared claude.ai page) use a copy published next to the page:
+// 50 mosaics in sat/, each 2048 px for 36°×36°.
+let satLocal=false;
+(()=>{const im=new Image();im.onload=()=>{satLocal=true;sat.key='';redrawSoon()};im.src='sat/m_0_0.jpg'})();
+const satAvailable=()=>satLocal||!(satFails>12&&satLoads===0); // offline: fall back to the grey relief
 function drawSatellite(){
   if(!satAvailable()) return false;
   const key=viewKey();
@@ -572,7 +600,8 @@ function drawSatellite(){
     // pick the level whose pixels are at least as fine as the screen's
     const need=(projection([180,0])[0]-projection([-180,0])[0])*k*DPR/360;
     let z=0; while(z<7&&512/(288/2**z)<need) z++;
-    const span=288/2**z,tpx=512/span;
+    let span=288/2**z,tpx=512/span;
+    if(satLocal){z='L';span=36;tpx=2048/36}
     let any=false;
     for(let y=0;y<H;y++){
       const inv=projection.invert([cx,(y+.5-transform.y)/k]); if(!inv) continue;
@@ -587,7 +616,7 @@ function drawSatellite(){
         const t=satTile(z,r,col);
         if(t.ok){c.drawImage(t.img,(la-tl)*tpx,((90-phi)-r*span)*tpx,(lb-la)*tpx,1,dx0,y,dx1-dx0,1);any=true;continue}
         // not loaded yet: use the nearest coarser tile that is
-        for(let zz=z-1;zz>=0;zz--){
+        if(z!=='L') for(let zz=z-1;zz>=0;zz--){
           const s2=288/2**zz,p2=512/s2,r2=Math.floor((90-phi)/s2),c2=Math.floor((la+180)/s2),t2=satTiles.get(zz+'/'+r2+'/'+c2);
           if(t2&&t2.ok){const tl2=-180+c2*s2;c.drawImage(t2.img,(la-tl2)*p2,((90-phi)-r2*s2)*p2,(lb-la)*p2,1,dx0,y,dx1-dx0,1);any=true;break}
         }
@@ -653,6 +682,24 @@ function drawCoastBleed(alpha){
     bleed.cv=cv; bleed.key=key; bleed.T={x:transform.x,y:transform.y,k:transform.k};
   }
   if(bleed.cv) drawCached(bleed,'source-over',alpha);
+}
+const frame={cv:null,T:null,last:'',t:0,timer:0};
+function quickFrame(){
+  const key=transform.x.toFixed(2)+','+transform.y.toFixed(2)+','+transform.k.toFixed(5),now=performance.now();
+  if(key===frame.last) return false;
+  const moving=now-frame.t<220; frame.last=key; frame.t=now;
+  if(!moving||!frame.cv) return false;
+  clearTimeout(frame.timer); frame.timer=setTimeout(()=>{frame.t=0;frame.last='';draw()},200);
+  const T=frame.T,s=transform.k/T.k;
+  ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle=theme.paper; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.setTransform(DPR*s,0,0,DPR*s,DPR*(transform.x-T.x*s),DPR*(transform.y-T.y*s));
+  ctx.drawImage(frame.cv,0,0,W,H); return true;
+}
+function keepFrame(){
+  const cv=frame.cv||(frame.cv=document.createElement('canvas'));
+  if(cv.width!==canvas.width||cv.height!==canvas.height){cv.width=canvas.width;cv.height=canvas.height}
+  const c=cv.getContext('2d'); c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,cv.width,cv.height); c.drawImage(canvas,0,0);
+  frame.T={x:transform.x,y:transform.y,k:transform.k};
 }
 let soonT=0; function redrawSoon(){if(!soonT)soonT=setTimeout(()=>{soonT=0;(typeof redraw==='function'?redraw:draw)()},30)}
 // rewind so d3's spherical polygons read as small areas (exterior clockwise in d3's convention)
@@ -737,6 +784,7 @@ function setActive(){
 
 function draw(){
   if(!landPath) return;
+  if(quickFrame()) return;
   const k=transform.k;
   ctx.setTransform(DPR,0,0,DPR,0,0);
   ctx.fillStyle=theme.paper; ctx.fillRect(0,0,W,H);
@@ -767,6 +815,7 @@ function draw(){
   ctx.strokeStyle=theme.water; ctx.lineWidth=1/k; ctx.stroke(spherePath);
   if(satel) topFade(); // keeps the year readable over bright ice and desert
   drawLabels();
+  keepFrame();
 }
 
 function drawLabels(){

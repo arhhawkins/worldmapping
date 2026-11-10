@@ -306,13 +306,31 @@ def polygon_list(path, tol, q, min_area=0):
 
 def build_land():
     """Coastlines and lakes (10m), rivers and terrain names, each layer on its own LAND_Q grid."""
-    rivers = []
+    rivers, longest = [], {}
     for f in json.load(open(RIVERS))["features"]:
         g = shape(f["geometry"]).simplify(0.02)
+        name = (f["properties"].get("name_en") or f["properties"].get("name") or "").strip()
         for line in (g.geoms if g.geom_type == "MultiLineString" else [g]):
             enc = encode(list(line.coords), LAND_Q["rivers"])
             if len(enc) >= 4:
                 rivers.append([f["properties"]["scalerank"], enc])
+            if name and len(line.coords) >= 5 and line.length > longest.get(name, (0,))[0]:
+                longest[name] = (line.length, f["properties"]["scalerank"], list(line.coords))
+    # one name per river, at the middle of its longest stretch, with a second point for the angle
+    river_names = []
+    for name, (_, rank, c) in longest.items():
+        m = len(c) // 2
+        a, b = c[max(0, m - 1)], c[min(len(c) - 1, m + 1)]
+        river_names.append([name, rank, round((a[0] + b[0]) / 2, 3), round((a[1] + b[1]) / 2, 3),
+                            round(b[0] - a[0], 4), round(b[1] - a[1], 4)])
+    lake_names = []
+    for f in json.load(open(LAKES))["features"]:
+        p = f["properties"]
+        name = (p.get("name_en") or p.get("name") or "").strip()
+        g = shape(f["geometry"])
+        if name and g.area > 0.02:
+            pt = g.representative_point()
+            lake_names.append([name, p.get("scalerank", 9) or 9, round(pt.x, 3), round(pt.y, 3), round(g.area, 2)])
     terrain = []
     for f in json.load(open(REGIONS))["features"]:
         p = {k.lower(): v for k, v in f["properties"].items()}
@@ -329,6 +347,8 @@ def build_land():
         "land": polygon_list(LAND, 0.005, LAND_Q["land"]),
         "lakes": polygon_list(LAKES, 0.008, LAND_Q["lakes"], min_area=0.002),
         "rivers": rivers,
+        "rivernames": river_names,
+        "lakenames": lake_names,
         "terrain": terrain,
     }
 
