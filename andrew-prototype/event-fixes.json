@@ -1,0 +1,648 @@
+{
+ "about": "Hand fixes to events from Wikidata, from the fact-check: corrected places, years, names, kinds and descriptions, and events left out. Applied by tools/fetch_events.py. Years use the map's numbering (-490 = 490 BCE).",
+ "fixes": {
+  "Q203729": {
+   "fix": {
+    "y0": -1274,
+    "y1": -1274
+   },
+   "why": "BCE year is one too recent (y0 -1273 shows as 1273 BCE; the real date is 1274 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Kadesh"
+  },
+  "Q31900": {
+   "fix": {
+    "y0": -490,
+    "y1": -490
+   },
+   "why": "BCE year is one too recent (y0 -489 shows as 489 BCE; the real date is 490 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Marathon"
+  },
+  "Q131969": {
+   "fix": {
+    "y0": -480,
+    "y1": -480
+   },
+   "why": "BCE year is one too recent (y0 -479 shows as 479 BCE; the real date is 480 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Thermopylae"
+  },
+  "Q178850": {
+   "fix": {
+    "y0": -480,
+    "y1": -480
+   },
+   "why": "BCE year is one too recent (y0 -479 shows as 479 BCE; the real date is 480 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Salamis"
+  },
+  "Q204636": {
+   "fix": {
+    "y0": -479,
+    "y1": -479
+   },
+   "why": "BCE year is one too recent (y0 -478 shows as 478 BCE; the real date is 479 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Plataea"
+  },
+  "Q461599": {
+   "fix": {
+    "y0": -371,
+    "y1": -371
+   },
+   "why": "BCE year is one too recent (y0 -370 shows as 370 BCE; the real date is 371 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Leuctra"
+  },
+  "Q200716": {
+   "fix": {
+    "y0": -338,
+    "y1": -338
+   },
+   "why": "BCE year is one too recent (y0 -337 shows as 337 BCE; the real date is 338 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Chaeronea_(338_BC)"
+  },
+  "Q192938": {
+   "fix": {
+    "y0": -334,
+    "y1": -334
+   },
+   "why": "BCE year is one too recent (y0 -333 shows as 333 BCE; the real date is 334 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_the_Granicus"
+  },
+  "Q201526": {
+   "fix": {
+    "y0": -333,
+    "y1": -333
+   },
+   "why": "BCE year is one too recent (y0 -332 shows as 332 BCE; the real date is 333 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Issus"
+  },
+  "Q179670": {
+   "fix": {
+    "y0": -331,
+    "y1": -331
+   },
+   "why": "BCE year is one too recent (y0 -330 shows as 330 BCE; the real date is 331 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Gaugamela"
+  },
+  "Q213074": {
+   "fix": {
+    "y0": -326,
+    "y1": -326
+   },
+   "why": "BCE year is one too recent (y0 -325 shows as 325 BCE; the real date is 326 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_the_Hydaspes"
+  },
+  "Q271873": {
+   "fix": {
+    "y0": -218,
+    "y1": -218
+   },
+   "why": "BCE year is one too recent (y0 -217 shows as 217 BCE; the real date is 218 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_the_Trebia"
+  },
+  "Q207250": {
+   "fix": {
+    "y0": -217,
+    "y1": -217
+   },
+   "why": "BCE year is one too recent (y0 -216 shows as 216 BCE; the real date is 217 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Lake_Trasimene"
+  },
+  "Q179591": {
+   "fix": {
+    "y0": -216,
+    "y1": -216
+   },
+   "why": "BCE year is one too recent (y0 -215 shows as 215 BCE; the real date is 216 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Cannae"
+  },
+  "Q200056": {
+   "fix": {
+    "y0": -202,
+    "y1": -202
+   },
+   "why": "BCE year is one too recent (y0 -201 shows as 201 BCE; the real date is 202 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Zama"
+  },
+  "Q205887": {
+   "fix": {
+    "y0": -53,
+    "y1": -53
+   },
+   "why": "BCE year is one too recent (y0 -52 shows as 52 BCE; the real date is 53 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Carrhae"
+  },
+  "Q131386": {
+   "fix": {
+    "y0": -52,
+    "y1": -52
+   },
+   "why": "BCE year is one too recent (y0 -51 shows as 51 BCE; the real date is 52 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Alesia"
+  },
+  "Q203681": {
+   "fix": {
+    "y0": -48,
+    "y1": -48
+   },
+   "why": "BCE year is one too recent (y0 -47 shows as 47 BCE; the real date is 48 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Pharsalus"
+  },
+  "Q160387": {
+   "fix": {
+    "y0": -31,
+    "y1": -31
+   },
+   "why": "BCE year is one too recent (y0 -30 shows as 30 BCE; the real date is 31 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Actium"
+  },
+  "Q76026": {
+   "fix": {
+    "y0": -499,
+    "y1": -499
+   },
+   "why": "BCE year is one too recent (y0 -498 shows as 498 BCE; the real date is 499 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Greco-Persian_Wars"
+  },
+  "Q651008": {
+   "fix": {
+    "y0": -395,
+    "y1": -387
+   },
+   "why": "BCE year is one too recent (y0 -394 shows as 394 BCE; the real date is 395 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Corinthian_War"
+  },
+  "Q109251": {
+   "fix": {
+    "y0": -343,
+    "y1": -343
+   },
+   "why": "BCE year is one too recent (y0 -342 shows as 342 BCE; the real date is 343 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Samnite_Wars"
+  },
+  "Q7930888": {
+   "fix": {
+    "y0": -167,
+    "y1": -160
+   },
+   "why": "BCE year is one too recent (y0 -166 shows as 166 BCE; the real date is 167 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Maccabean_Revolt"
+  },
+  "Q677316": {
+   "fix": {
+    "y0": -91,
+    "y1": -88
+   },
+   "why": "BCE year is one too recent (y0 -90 shows as 90 BCE; the real date is 91 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Social_War_(91%E2%80%9387_BC)"
+  },
+  "Q194378": {
+   "fix": {
+    "y0": -73,
+    "y1": -71
+   },
+   "why": "BCE year is one too recent (y0 -72 shows as 72 BCE; the real date is 73 BCE, and its own desc agrees where it gives one). Part of the systematic BCE off-by-one; see notes.",
+   "source": "https://en.wikipedia.org/wiki/Third_Servile_War"
+  },
+  "Q202161": {
+   "fix": {
+    "y0": -58,
+    "y1": -50
+   },
+   "why": "BCE off-by-one: starts 58 BCE, not 57. Ended 50 BCE (Wikipedia: 58–50 BC).",
+   "source": "https://en.wikipedia.org/wiki/Gallic_Wars"
+  },
+  "Q733364": {
+   "fix": {
+    "y0": -1457,
+    "y1": -1457
+   },
+   "why": "BCE off-by-one: its own desc says 1457 BC but y0 is -1456 (shows '1456 BCE').",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Megiddo_(15th_century_BC)"
+  },
+  "Q208261": {
+   "fix": {
+    "y0": -499,
+    "y1": -493,
+    "lat": 37.53,
+    "lon": 27.28
+   },
+   "why": "BCE off-by-one (499–493 BCE), and the dot is in central Anatolia (39.0, 35.0, the Turkey centroid), not Ionia on the Aegean coast.",
+   "source": "https://en.wikipedia.org/wiki/Ionian_Revolt"
+  },
+  "Q124988": {
+   "fix": {
+    "y0": -264,
+    "y1": -264,
+    "lat": 36.85,
+    "lon": 10.32
+   },
+   "why": "BCE off-by-one (began 264 BCE), and the dot is in the open Tyrrhenian Sea (39.37, 11.41).",
+   "source": "https://en.wikipedia.org/wiki/Punic_Wars"
+  },
+  "Q6286": {
+   "fix": {
+    "y0": -264,
+    "y1": -264,
+    "lat": 37.5,
+    "lon": 14.0
+   },
+   "why": "BCE off-by-one (264 BCE), and the dot is in the Ionian Sea off Calabria (38.0, 17.0). The war was fought mainly over Sicily.",
+   "source": "https://en.wikipedia.org/wiki/First_Punic_War"
+  },
+  "Q6334": {
+   "fix": {
+    "y0": -149,
+    "y1": -146,
+    "lat": 36.85,
+    "lon": 10.32
+   },
+   "why": "BCE off-by-one (149–146 BCE), and the dot is in southern Tunisia (34.0, 10.0). The war was the siege of Carthage.",
+   "source": "https://en.wikipedia.org/wiki/Third_Punic_War"
+  },
+  "Q75813": {
+   "fix": {
+    "y0": -214,
+    "y1": -214,
+    "desc": "series of wars between the Roman Republic and Greek kingdoms, including Macedon"
+   },
+   "why": "BCE off-by-one (began 214 BCE), and the desc says 'Roman Empire', which didn't exist yet (it was the Roman Republic).",
+   "source": "https://en.wikipedia.org/wiki/Macedonian_Wars"
+  },
+  "Q42937": {
+   "fix": "drop",
+   "why": "Legend shown as a dated 'Major event · 1257 BCE' with a battle icon (kind 'operation'). The year is invented precision for a myth, which misleads kids.",
+   "source": "https://en.wikipedia.org/wiki/Trojan_War"
+  },
+  "Q112016": {
+   "fix": {
+    "name": "Battle of the Persian Gate",
+    "y0": -330,
+    "y1": -330
+   },
+   "why": "Odd name not used by Wikipedia, plus BCE off-by-one (winter 330 BCE).",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_the_Persian_Gate"
+  },
+  "Q3436155": {
+   "fix": {
+    "y0": -547,
+    "y1": -547,
+    "desc": "siege in which Cyrus the Great captured Sardis, capital of Lydia"
+   },
+   "why": "Misleading, puffed-up desc ('the greatest empire of east'), plus BCE off-by-one.",
+   "source": "https://en.wikipedia.org/wiki/Siege_of_Sardis_(547_BC)"
+  },
+  "Q2889436": {
+   "fix": {
+    "y0": -416,
+    "y1": -416,
+    "desc": "Athenian siege of Melos during the Peloponnesian War, 416 BCE"
+   },
+   "why": "Desc starts with lowercase 'peloponnesian', plus BCE off-by-one.",
+   "source": "https://en.wikipedia.org/wiki/Siege_of_Melos"
+  },
+  "Q25517452": {
+   "fix": {
+    "desc": "violent prehistoric battle dated to about 1250 BCE in northern Germany"
+   },
+   "why": "Desc has a stray ',battle' joined on (and stray quotation marks for Dertosa). The panel shows 'Battle: …,battle'.",
+   "source": "https://en.wikipedia.org/wiki/Tollense_valley_battlefield"
+  },
+  "Q1754459": {
+   "fix": {
+    "desc": "311 BCE battle between Carthage and Syracuse",
+    "y0": -311,
+    "y1": -311
+   },
+   "why": "Desc has a stray ',battle' joined on (and stray quotation marks for Dertosa). The panel shows 'Battle: …,battle'.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_the_Himera_River_(311_BC)"
+  },
+  "Q756413": {
+   "fix": {
+    "desc": "279 BCE battle of the Pyrrhic War",
+    "y0": -279,
+    "y1": -279
+   },
+   "why": "Desc has a stray ',battle' joined on (and stray quotation marks for Dertosa). The panel shows 'Battle: …,battle'.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Asculum"
+  },
+  "Q1788933": {
+   "fix": {
+    "desc": "battle of the Second Punic War, fought in spring 215 BCE on the Ebro River opposite Dertosa",
+    "y0": -215,
+    "y1": -215
+   },
+   "why": "Desc has a stray ',battle' joined on (and stray quotation marks for Dertosa). The panel shows 'Battle: …,battle'.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Ibera"
+  },
+  "Q87779": {
+   "fix": {
+    "desc": "battle between a coalition of Germanic peoples and a Roman army, 9 CE"
+   },
+   "why": "The year (9) is right, but the desc says '9 BCE'. It was 9 CE.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_the_Teutoburg_Forest"
+  },
+  "Q139808": {
+   "fix": {
+    "name": "Battle of the Catalaunian Plains"
+   },
+   "why": "Unusual name. Wikipedia and most books call it the Battle of the Catalaunian Plains.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_the_Catalaunian_Plains"
+  },
+  "Q51656": {
+   "fix": {
+    "lat": 41.01,
+    "lon": 28.98
+   },
+   "why": "Dot in North Macedonia (42.0, 22.0). The Fourth Crusade ended by sacking Constantinople.",
+   "source": "https://en.wikipedia.org/wiki/Fourth_Crusade"
+  },
+  "Q51659": {
+   "fix": {
+    "lat": 31.42,
+    "lon": 31.81
+   },
+   "why": "Dot in Lebanon (34.0, 36.0). The Fifth Crusade was fought at Damietta in Egypt.",
+   "source": "https://en.wikipedia.org/wiki/Fifth_Crusade"
+  },
+  "Q191293": {
+   "fix": {
+    "desc": "magnitude 8 earthquake (23 January 1556) in Shaanxi, China; regarded as the deadliest earthquake in recorded history"
+   },
+   "why": "Typo in desc: 'Janaury'.",
+   "source": "https://en.wikipedia.org/wiki/1556_Shaanxi_earthquake"
+  },
+  "Q180897": {
+   "fix": {
+    "lat": 41.5,
+    "lon": -5.0
+   },
+   "why": "Dot in Extremadura (39.21, -6.72). The treaty was signed in Tordesillas, north-west Spain.",
+   "source": "https://en.wikipedia.org/wiki/Treaty_of_Tordesillas"
+  },
+  "Q1552718": {
+   "fix": {
+    "y0": 1482,
+    "y1": 1492
+   },
+   "why": "y0 is 1492 but the war ran from 1482 to 1492 (its own desc says so).",
+   "source": "https://en.wikipedia.org/wiki/Granada_War"
+  },
+  "Q189508": {
+   "fix": {
+    "lat": 51.51,
+    "lon": -0.13
+   },
+   "why": "Dot in southern Scotland (55.0, -4.0, a Great Britain centroid). The revolution centred on London.",
+   "source": "https://en.wikipedia.org/wiki/Glorious_Revolution"
+  },
+  "Q151616": {
+   "fix": {
+    "desc": "war between Sweden and a coalition led by Russia, 1700–1721"
+   },
+   "why": "Garbled desc ('anti-Swedish coalition Led by Russia and Swedish empires').",
+   "source": "https://en.wikipedia.org/wiki/Great_Northern_War"
+  },
+  "Q2477522": {
+   "fix": {
+    "y0": 1769,
+    "y1": 1770
+   },
+   "why": "Years 1767–1773. Wikipedia: the famine struck between 1769 and 1770.",
+   "source": "https://en.wikipedia.org/wiki/Great_Bengal_famine_of_1770"
+  },
+  "Q179250": {
+   "fix": {
+    "lat": 55.52,
+    "lon": 35.82
+   },
+   "why": "Dot in western Siberia (58.65, 70.12). Napoleon's invasion reached Moscow and never got east of it.",
+   "source": "https://en.wikipedia.org/wiki/French_invasion_of_Russia"
+  },
+  "Q8729": {
+   "fix": {
+    "lat": 59.94,
+    "lon": 30.31
+   },
+   "why": "Dot in western Siberia (58.65, 70.12). The 1917 revolution happened in Petrograd.",
+   "source": "https://en.wikipedia.org/wiki/Russian_Revolution"
+  },
+  "Q184928": {
+   "fix": {
+    "lat": 59.94,
+    "lon": 30.31
+   },
+   "why": "Dot in central Siberia (66.42, 94.25, the Russia centroid). It began with Bloody Sunday in St Petersburg.",
+   "source": "https://en.wikipedia.org/wiki/Russian_Revolution_of_1905"
+  },
+  "Q182062": {
+   "fix": {
+    "lat": 37.5,
+    "lon": 22.4
+   },
+   "why": "Dot on Istanbul (41.0, 29.0). The war was fought in Greece, centred on the Peloponnese.",
+   "source": "https://en.wikipedia.org/wiki/Greek_War_of_Independence"
+  },
+  "Q191282": {
+   "fix": {
+    "lat": 23.13,
+    "lon": 113.26
+   },
+   "why": "Dot in Gansu, far inland (35.84, 103.45, the China centroid). The war was fought on the south and east coasts, starting at Canton.",
+   "source": "https://en.wikipedia.org/wiki/First_Opium_War"
+  },
+  "Q150229": {
+   "fix": {
+    "lat": 39.9,
+    "lon": 116.4
+   },
+   "why": "Dot in the Gobi / Inner Mongolia (41.4, 105.1). The rebellion and the siege of the legations were in north China around Beijing.",
+   "source": "https://en.wikipedia.org/wiki/Boxer_Rebellion"
+  },
+  "Q190517": {
+   "fix": {
+    "lat": 30.55,
+    "lon": 114.3
+   },
+   "why": "Dot in Gansu (38.0, 103.0). The revolution began with the Wuchang Uprising (Wuhan).",
+   "source": "https://en.wikipedia.org/wiki/1911_Revolution"
+  },
+  "Q12583": {
+   "fix": {
+    "lat": 20.02,
+    "lon": -75.82
+   },
+   "why": "Dot in the open Caribbean Sea (15.0, -75.0). The main fighting was in Cuba.",
+   "source": "https://en.wikipedia.org/wiki/Spanish%E2%80%93American_War"
+  },
+  "Q8736": {
+   "fix": {
+    "y0": 1919,
+    "y1": 1919
+   },
+   "why": "Shows 1920, but the treaty was signed on 28 June 1919. 1920 is when it came into force (the fetch script prefers 'start time' over 'point in time').",
+   "source": "https://en.wikipedia.org/wiki/Treaty_of_Versailles"
+  },
+  "Q165058": {
+   "fix": {
+    "desc": "man-made famine in Soviet Ukraine in 1932–33 that killed millions of Ukrainians"
+   },
+   "why": "Desc gives the top of a contested range as fact ('as many as seven million'). Wikipedia's lead just says 'millions', and most recent scholarship estimates fewer than seven million.",
+   "source": "https://en.wikipedia.org/wiki/Holodomor"
+  },
+  "Q36756": {
+   "fix": {
+    "kind": "attack"
+   },
+   "why": "Kind is 'invasion', so the panel says 'Invasion: pogrom…' with a sword icon. It was a pogrom, not an invasion.",
+   "source": "https://en.wikipedia.org/wiki/Kristallnacht"
+  },
+  "Q154255": {
+   "fix": {
+    "name": "Munich Agreement"
+   },
+   "why": "Capitalisation: the name is 'Munich Agreement'.",
+   "source": "https://en.wikipedia.org/wiki/Munich_Agreement"
+  },
+  "Q150812": {
+   "fix": {
+    "name": "Invasion of Poland"
+   },
+   "why": "Odd name and capitalisation ('1939 Invasion of Poland').",
+   "source": "https://en.wikipedia.org/wiki/Invasion_of_Poland"
+  },
+  "Q154720": {
+   "fix": {
+    "lat": 51.3,
+    "lon": 0.5
+   },
+   "why": "Dot in the Lake District (54.0, -2.0). The air battle was fought mostly over south-east England.",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Britain"
+  },
+  "Q488": {
+   "fix": {
+    "kind": "attack"
+   },
+   "why": "Kind 'battle' gives it a sword icon and the label 'Battle: 1945 use of nuclear weapons…'. It wasn't a battle.",
+   "source": "https://en.wikipedia.org/wiki/Atomic_bombings_of_Hiroshima_and_Nagasaki"
+  },
+  "Q154182": {
+   "fix": {
+    "desc": "1945 last major offensive of the European theatre of World War II"
+   },
+   "why": "Typo in desc: 'World War Il' (lowercase L).",
+   "source": "https://en.wikipedia.org/wiki/Battle_of_Berlin"
+  },
+  "Q49077": {
+   "fix": {
+    "lat": 31.5,
+    "lon": 34.9
+   },
+   "why": "Dot in north-east Saudi Arabia (28.0, 45.0, a 'Middle East' centroid). The fighting was in Sinai, the West Bank and the Golan Heights.",
+   "source": "https://en.wikipedia.org/wiki/Six-Day_War"
+  },
+  "Q33761": {
+   "fix": {
+    "lat": 35.04,
+    "lon": 9.48
+   },
+   "why": "Dot in Chad (10.5, 15.5). The Arab Spring began in Sidi Bouzid, Tunisia.",
+   "source": "https://en.wikipedia.org/wiki/Arab_Spring"
+  },
+  "Q134900605": {
+   "fix": {
+    "lat": 35.69,
+    "lon": 51.39
+   },
+   "why": "Dot in Saudi Arabia (28.0, 45.0). The war was fought between Iran and Israel.",
+   "source": "https://en.wikipedia.org/wiki/Twelve-Day_War"
+  },
+  "Q4203073": {
+   "fix": {
+    "lat": 38.5,
+    "lon": 44.0
+   },
+   "why": "Dot in Saudi Arabia (28.0, 45.0). The Ottoman–Persian wars were fought in eastern Anatolia, the Caucasus and Mesopotamia.",
+   "source": "https://en.wikipedia.org/wiki/Ottoman%E2%80%93Persian_Wars"
+  },
+  "Q243721": {
+   "fix": {
+    "lat": 41.89,
+    "lon": 12.48
+   },
+   "why": "Dot in north-west Poland (53.5, 15.5, Wikidata's 'Europe' point). It was a Roman civil war centred on Rome.",
+   "source": "https://en.wikipedia.org/wiki/Year_of_the_Five_Emperors"
+  },
+  "Q107529288": {
+   "fix": {
+    "lat": 50.5,
+    "lon": 6.9
+   },
+   "why": "Dot in north-west Poland (53.5, 15.5, 'Europe' point). The worst flooding was in western Germany and Belgium.",
+   "source": "https://en.wikipedia.org/wiki/2021_European_floods"
+  },
+  "Q1162294": {
+   "fix": {
+    "name": "Imperial Trans-Antarctic Expedition (Endurance)",
+    "lat": -68.65,
+    "lon": -52.43
+   },
+   "why": "Odd name, and the dot is at the South Pole. Shackleton's ship Endurance was crushed in the Weddell Sea, and the expedition never reached the Pole.",
+   "source": "https://en.wikipedia.org/wiki/Imperial_Trans-Antarctic_Expedition"
+  },
+  "Q1031706": {
+   "fix": {
+    "lat": -77.85,
+    "lon": 166.64
+   },
+   "why": "Dot at the South Pole, but the Discovery Expedition was based at McMurdo Sound and didn't reach the Pole.",
+   "source": "https://en.wikipedia.org/wiki/Discovery_Expedition"
+  },
+  "Q735349": {
+   "fix": {
+    "desc": "Russian takeover of Siberia, from the 1580s to the 1700s"
+   },
+   "why": "Desc has a typo and broken grammar ('process of incorporation Siberia … untill 1700s').",
+   "source": "https://en.wikipedia.org/wiki/Russian_conquest_of_Siberia"
+  },
+  "Q214148": {
+   "fix": {
+    "kind": "protest"
+   },
+   "why": "Kind 'war' (panel says 'War: …' with a sword). It was a labour protest and bombing in Chicago.",
+   "source": "https://en.wikipedia.org/wiki/Haymarket_affair"
+  },
+  "Q623429": {
+   "fix": "drop",
+   "why": "An era, not an event. It has kind 'operation' (shown as 'Military operation'), and y0 1863 contradicts its own desc (1865–1877).",
+   "source": "https://en.wikipedia.org/wiki/Reconstruction_era"
+  },
+  "Q833926": {
+   "fix": "drop",
+   "why": "Two people, not an event, and the kind is 'war'. The desc is about an execution, which isn't suitable for 8–12 with no context.",
+   "source": "https://en.wikipedia.org/wiki/Sacco_and_Vanzetti"
+  },
+  "Q734004": {
+   "fix": "drop",
+   "why": "A massacre classed as a 'battle', so it got past the grim-content filter. Not suitable for this audience without context.",
+   "source": "https://en.wikipedia.org/wiki/Black_January"
+  },
+  "Q83872271": {
+   "fix": "drop",
+   "why": "Near-duplicate of 'COVID-19 pandemic' (Q81068910), same year, with a second dot at the China centroid.",
+   "source": "https://en.wikipedia.org/wiki/COVID-19_pandemic_in_mainland_China"
+  },
+  "Q79967": {
+   "fix": "drop",
+   "why": "Recent terrorist mass killing (many victims were teenagers), shown with no context. Not suitable for a map game for 8–12-year-olds.",
+   "source": "https://en.wikipedia.org/wiki/2011_Norway_attacks"
+  },
+  "Q21479779": {
+   "fix": "drop",
+   "why": "Recent terrorist attack, shown with no context. Not suitable for this audience.",
+   "source": "https://en.wikipedia.org/wiki/November_2015_Paris_attacks"
+  },
+  "Q124086054": {
+   "fix": "drop",
+   "why": "A contested legal label shown as a 'Major event' name in a kids' UI, with kind 'disaster' (wrong) and an ongoing event. Wikipedia uses this title, but Israel and several governments dispute the genocide finding, and the house rules (§12, rule 10) call for context.",
+   "source": "https://en.wikipedia.org/wiki/Gaza_genocide"
+  }
+ }
+}

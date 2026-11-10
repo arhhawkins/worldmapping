@@ -2,7 +2,7 @@
 ## Actionable Product & Development Plan
 
 **Working title:** Atlas of Time (placeholder)  
-**Version:** 0.2 — First playable prototype  
+**Version:** 0.4 — First playable prototype  
 **Status:** Prototype built: `andrew-prototype/game.html` (see Revision notes)  
 **Development approach:** Incremental, modular, non-destructive
 
@@ -19,7 +19,7 @@ Changes made while building the first playable prototype. The rest of the plan i
 5. **Every authored item is tagged "Draft – not yet fact-checked"** in the interface until a person reviews it (§12, rule 13).
 6. **Discovery pins must fill the border data's gaps.** Cliopatria has nothing in the Americas, China or most of Africa before about 1500 BCE, so pins deliberately cover those regions (Liangzhu, Norte Chico) (§12, rule 14).
 7. **The technical plan follows this repository**, which is single-file pages plus a Python build script, not a React/TypeScript app. Content lives in one structured JSON file that the build validates (§13).
-8. **Open question: who is the main player?** The 60–120-word stories suit teens and adults. A younger audience needs shorter text and more map-tapping (§20 H).
+8. **Open question: who is the main player?** The 60–120-word stories suit confident readers aged about 10 and up. A younger audience needs shorter text and more map-tapping (§20 H).
 
 ---
 
@@ -258,14 +258,14 @@ A player begins at 3400 BCE.
 They complete:
 
 - Two Truths & a Lie: +40
-- Map Detective: +30
+- Map Detective: +40
 - Then / Now: +40
 
-**Total earned: 110 Insight**
+**Total earned: 120 Insight**
 
 The next checkpoint costs 70 Insight.
 
-The player advances 200 years and retains 40 Insight.
+The player advances 200 years and retains 50 Insight.
 
 They may spend remaining points on optional content or save them for future progression.
 
@@ -599,7 +599,7 @@ The player sees the border map at a secret year, with the state names showing bu
 
 ### Rules in the prototype
 
-- **Adventure:** one 3-round challenge at the 3000 BCE checkpoint, limited to 3400–3000 BCE so it never shows the future. Completing it gives +30, and an average score of 500 or more out of 1000 gives the +10 bonus.
+- **Adventure:** one 3-round challenge at the 3000 BCE checkpoint, limited to 3400–3000 BCE so it never shows the future. An average score of 500 or more out of 1,000 gives +40, and 250 or more gives +25 (see §4.2, v0.3).
 - **Free roam:** endless 5-round games over "All of history" or "Since 1000 CE", with the best score saved.
 - Closeness is measured on the slider's stretched scale, so being 100 years off in 1900 counts for more than being 100 years off in 2500 BCE.
 
@@ -1639,9 +1639,7 @@ Players should feel curious rather than tested.
 
 ## B. Correct answers vs. participation
 
-**Recommendation:** Award baseline Insight for completing new challenges.
-
-Give bonuses for correct answers.
+**Decision (v0.3):** Insight only for right answers, with review rounds as the safety net (see §4.2).
 
 ## C. Timeline advancement
 
@@ -1652,14 +1650,6 @@ Give bonuses for correct answers.
 **Recommendation:** Include parallel historical developments across regions.
 
 Do not make world history a sequential tour of only the most famous civilizations.
-
-## G. Free roam (v0.2)
-
-**Decision:** Free roam ships with the MVP as the second mode of the same page. It's the existing atlas plus every discovery pin and story, with no locks and no Insight. The campaign is one way in, not the only one (this was "Free Explore mode" in §22).
-
-## H. Audience (v0.2, open)
-
-**To decide:** who the main player is. The prototype's stories (60–120 words) assume a confident reader aged about 10 and up. A younger audience would need shorter stories, read-aloud support and more map-tapping than reading.
 
 ## E. Existing application integration
 
@@ -1674,6 +1664,14 @@ Do not replace or destabilize the existing app.
 Historical accuracy should be a core product feature.
 
 ---
+
+## G. Free roam (v0.2)
+
+**Decision:** Free roam ships with the MVP as the second mode of the same page. It's the existing atlas plus every discovery pin and story, with no locks and no Insight. The campaign is one way in, not the only one (this was "Free Explore mode" in §22).
+
+## H. Audience (v0.2, open)
+
+**To decide:** who the main player is. The prototype's stories (60–120 words) assume a confident reader aged about 10 and up. A younger audience would need shorter stories, read-aloud support and more map-tapping than reading.
 
 # 21. MVP Acceptance Checklist
 

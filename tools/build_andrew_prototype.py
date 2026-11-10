@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 """Build andrew-prototype/index.html from the raw data.
 
-Needs (both go in raw/, which is gitignored):
+Needs (all go in raw/, which is gitignored):
   raw/cliopatria/cliopatria_polities_only_v021.geojson
       git clone --depth 1 https://github.com/Seshat-Global-History-Databank/cliopatria.git raw/cliopatria
       cd raw/cliopatria && unzip cliopatria.geojson.zip
-  raw/ne_50m_land.geojson
-      curl -o raw/ne_50m_land.geojson https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_land.geojson
+  raw/ne_10m_land.geojson, raw/ne_50m_lakes.geojson, raw/ne_50m_rivers_lake_centerlines.geojson,
+  raw/ne_50m_geography_regions_polys.geojson   (Natural Earth, public domain)
+      for f in ne_10m_land ne_50m_lakes ne_50m_rivers_lake_centerlines ne_50m_geography_regions_polys; do
+        curl -o raw/$f.geojson https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/$f.geojson; done
+  raw/relief/GRAY_50M_SR.tif   (Natural Earth grey shaded relief)
+      curl -o raw/relief/GRAY_50M_SR.zip https://naciscdn.org/naturalearth/50m/raster/GRAY_50M_SR.zip
+      cd raw/relief && unzip GRAY_50M_SR.zip
   raw/d3.min.js   (inlined so the page works with no network)
       curl -o raw/d3.min.js https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js
 
 Run from the repo root:
-  pip install shapely
+  pip install shapely pillow
   python3 tools/build_andrew_prototype.py            # full build (about 2 minutes)
   python3 tools/build_andrew_prototype.py --fast     # reuse the processed borders in raw/build-cache/
 
@@ -24,6 +29,7 @@ including any checkpoint a player could never earn enough Insight to unlock.
 """
 import collections
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -32,19 +38,31 @@ from shapely.strtree import STRtree
 
 ROOT = Path(__file__).resolve().parent.parent
 CLIO = ROOT / "raw/cliopatria/cliopatria_polities_only_v021.geojson"
-LAND = ROOT / "raw/ne_50m_land.geojson"
+LAND = ROOT / "raw/ne_10m_land.geojson"
+LAKES = ROOT / "raw/ne_50m_lakes.geojson"
+RIVERS = ROOT / "raw/ne_50m_rivers_lake_centerlines.geojson"
+REGIONS = ROOT / "raw/ne_50m_geography_regions_polys.geojson"
+RELIEF = ROOT / "raw/relief/GRAY_50M_SR.tif"
 TEMPLATE = ROOT / "andrew-prototype/template.html"
 OUT = ROOT / "andrew-prototype/index.html"
 GAME_TEMPLATE = ROOT / "andrew-prototype/game-template.html"
 GAME_CONTENT = ROOT / "andrew-prototype/game-content.json"
 GAME_OUT = ROOT / "andrew-prototype/game.html"
+EVENTS = ROOT / "andrew-prototype/events.json"        # made by tools/fetch_events.py
+NAME_FIXES = ROOT / "andrew-prototype/name-fixes.json"   # fact-checked names for some years
 CACHE = ROOT / "raw/build-cache"
 D3 = ROOT / "raw/d3.min.js"
 MAX_BYTES = 10_000_000
 
 Q = 20             # coastline grid: degrees x 20, so 0.05 degree steps
 AQ = 100           # border grid: degrees x 100, so 0.01 degree steps (about 1 km)
+LQ = 50            # coastline, lake and river grid: 0.02 degree steps
 COLOURS = 8        # size of the atlas palette
+DATA_END, SHOW_UNTIL = 2024, 2026   # Cliopatria stops at 2024; its last borders carry on to 2026
+# Natural Earth region kinds shown as terrain names, and the label style key for each
+TERRAIN = {"Range/mtn": "mtn", "Plateau": "mtn", "Foothills": "mtn", "Desert": "dry", "Tundra": "dry",
+           "Plain": "low", "Basin": "low", "Lowland": "low", "Delta": "low", "Valley": "low",
+           "Wetlands": "low", "Gorge": "low"}
 
 
 def encode(ring, q=Q):
@@ -181,10 +199,12 @@ def build_polities():
     topo = Topology([r for polys in shapes for poly in polys for r in poly])
 
     for f, polys in zip(feats, shapes):
-        if not polys:
-            continue
         p = f["properties"]
         name = p["Name"]
+        # "(Name)" rows are Cliopatria composites: the union of other rows that are all on the
+        # map in their own right, so drawing them too doubles labels and stacks colours.
+        if not polys or name.startswith("("):
+            continue
         if name not in index:
             index[name] = len(names)
             names.append(name)
@@ -196,7 +216,8 @@ def build_polities():
             continue
         buffered.append(g.buffer(0.05))
         meta.append((index[name], p["FromYear"], p["ToYear"]))
-        items.append([index[name], p["FromYear"], p["ToYear"],
+        to_year = SHOW_UNTIL if p["ToYear"] == DATA_END else p["ToYear"]
+        items.append([index[name], p["FromYear"], to_year,
                       [[topo.ring(r) for r in poly] for poly in polys]])
 
     # Colour so that states touching at the same time never share a colour,
@@ -231,18 +252,65 @@ def build_polities():
     }
 
 
-def build_land():
-    data = json.load(open(LAND))
+def polygon_list(path, tol, keep=lambda props: True):
     polys = []
-    for f in data["features"]:
-        g = shape(f["geometry"]).simplify(0.03)
+    for f in json.load(open(path))["features"]:
+        if not keep(f["properties"]):
+            continue
+        g = shape(f["geometry"]).simplify(tol)
         parts = g.geoms if g.geom_type == "MultiPolygon" else [g]
         for p in parts:
-            rings = [encode(list(p.exterior.coords))] + [encode(list(r.coords)) for r in p.interiors]
+            rings = [encode(list(p.exterior.coords), LQ)] + [encode(list(r.coords), LQ) for r in p.interiors]
             rings = [r for r in rings if len(r) >= 8]
             if rings:
                 polys.append(rings)
     return polys
+
+
+def build_land():
+    """Coastlines (10m), lakes, rivers and terrain names, all on the LQ grid."""
+    rivers = []
+    for f in json.load(open(RIVERS))["features"]:
+        g = shape(f["geometry"]).simplify(0.02)
+        for line in (g.geoms if g.geom_type == "MultiLineString" else [g]):
+            enc = encode(list(line.coords), LQ)
+            if len(enc) >= 4:
+                rivers.append([f["properties"]["scalerank"], enc])
+    terrain = []
+    for f in json.load(open(REGIONS))["features"]:
+        p = {k.lower(): v for k, v in f["properties"].items()}
+        kind = TERRAIN.get(p["featurecla"])
+        if not kind or not p.get("name"):
+            continue
+        g = shape(f["geometry"])
+        pt = g.representative_point()
+        b = g.bounds
+        terrain.append([p["name"], kind, p["scalerank"], round(pt.x, 2), round(pt.y, 2),
+                        round(b[2] - b[0], 1)])   # width in degrees, used to size the label
+    return {
+        "q": LQ,
+        "land": polygon_list(LAND, 0.02),
+        "coast": polygon_list(LAND, 0.12),     # light outline for the wide, soft waterline strokes
+        "lakes": polygon_list(LAKES, 0.01),
+        "rivers": rivers,
+        "terrain": terrain,
+    }
+
+
+def build_relief():
+    """Grey shaded relief as a WebP data URI, rescaled so flat ground is mid-grey (neutral in an overlay blend)."""
+    import base64
+    import io
+    from PIL import Image
+    cached = CACHE / "relief.webp"
+    if not cached.exists():
+        Image.MAX_IMAGE_PIXELS = None
+        im = Image.open(RELIEF).convert("L").resize((5400, 2700), Image.LANCZOS)
+        flat = 145   # the value Natural Earth uses for flat land and sea
+        im = im.point(lambda v: max(0, min(255, round(128 + (v - flat) * 1.25))))
+        CACHE.mkdir(parents=True, exist_ok=True)
+        im.save(cached, "WEBP", quality=60, method=6)
+    return "data:image/webp;base64," + base64.b64encode(cached.read_bytes()).decode()
 
 
 def validate_content(content, polities):
@@ -347,13 +415,50 @@ def main():
     fast = "--fast" in sys.argv[1:]
     if fast and (CACHE / "polities.json").exists():
         polities = json.loads((CACHE / "polities.json").read_text())
-        land = json.loads((CACHE / "land.json").read_text())
         print("Reusing processed borders from raw/build-cache/")
     else:
-        polities, land = build_polities(), build_land()
+        polities = build_polities()
         CACHE.mkdir(parents=True, exist_ok=True)
         (CACHE / "polities.json").write_text(json.dumps(polities, separators=(",", ":")))
-        (CACHE / "land.json").write_text(json.dumps(land, separators=(",", ":")))
+    land, relief = build_land(), build_relief()
+
+    # Fact-checked display names: [state index, from, to, name], applied on the map and in panels
+    polities["alias"] = []
+    if NAME_FIXES.exists():
+        fixes = json.loads(NAME_FIXES.read_text())
+        idx = {n: i for i, n in enumerate(polities["names"])}
+        for fx in fixes["fixes"]:
+            if fx["name"] not in idx:
+                print("name-fixes.json: no state called", fx["name"])
+                continue
+            to = SHOW_UNTIL if fx["to"] >= DATA_END else fx["to"]
+            polities["alias"].append([idx[fx["name"]], fx["from"], to, fx["display"]])
+        # Countries on today's map: their common short name (the Wikipedia title), e.g.
+        # "Russian Federation" shows as "Russia", unless a fix above already covers them.
+        keep = set(fixes.get("no_short_name", []))
+        spans = collections.defaultdict(list)
+        for fx in fixes["fixes"]:
+            spans[fx["name"]].append((fx["from"], SHOW_UNTIL if fx["to"] >= DATA_END else fx["to"]))
+        first = {}
+        for n, a, b, _ in polities["f"]:
+            first[n] = min(first.get(n, a), a)
+        for n in sorted({n for n, a, b, _ in polities["f"] if b == SHOW_UNTIL}):
+            a, b = first[n], SHOW_UNTIL   # the whole life of a country that is still here
+            name, title = polities["names"][n], polities["wiki"][n] or ""
+            short = re.sub(r"^The ", "", re.sub(r"\s*\(.*\)$", "", title)).strip()
+            if name in keep or not short or short == name or short.startswith("History of"):
+                continue
+            # only the years no explicit fix covers
+            start = a
+            for fa, fb in sorted(spans[name]):
+                if fb >= start and fa <= b:
+                    if fa > start:
+                        polities["alias"].append([n, start, fa - 1, short])
+                    start = max(start, fb + 1)
+            if start <= b:
+                polities["alias"].append([n, start, b, short])
+    events = {"events": [{k: e[k] for k in ("id", "name", "kind", "tier", "y0", "y1", "lon", "lat", "sl", "desc", "wiki")}
+                         for e in json.loads(EVENTS.read_text())["events"]]}
 
     content = json.loads(GAME_CONTENT.read_text())
     problems = validate_content(content, polities)
@@ -364,9 +469,11 @@ def main():
     js = lambda obj: json.dumps(obj, separators=(",", ":")).replace("</", "<\\/")
     d3 = D3.read_text()
     assert "</script" not in d3
-    write(OUT, render(TEMPLATE, [("POLITIES", js(polities)), ("LAND", js(land)), ("D3", d3)]))
+    write(OUT, render(TEMPLATE, [("POLITIES", js(polities)), ("LAND", js(land)), ("RELIEF", relief),
+                                ("EVENTS", js(events)), ("D3", d3)]))
     write(GAME_OUT, render(GAME_TEMPLATE, [("POLITIES", js(polities)), ("LAND", js(land)),
-                                           ("CONTENT", js(content)), ("D3", d3)]))
+                                           ("CONTENT", js(content)), ("RELIEF", relief),
+                                           ("EVENTS", js(events)), ("D3", d3)]))
 
 
 if __name__ == "__main__":

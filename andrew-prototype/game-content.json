@@ -14,7 +14,7 @@
     {
       "id": "cp-3200", "year": -3200, "chapter": "ch1", "cost": 70,
       "headline": "New states and great monuments",
-      "intro": "A second state, Elam, has appeared east of Sumer. In Ireland, farmers are raising enormous stone-lined tombs, and in eastern China a rice-farming society is building towns, canals and earthworks."
+      "intro": "A second state on our map, Elam, has appeared east of Sumer. In Ireland, farmers are raising enormous stone-lined tombs, and in eastern China a rice-farming society is building towns, canals and earthworks."
     },
     {
       "id": "cp-3000", "year": -3000, "chapter": "ch1", "cost": 70,
@@ -185,7 +185,7 @@
       "target": { "kind": "place", "lat": 46.7789, "lon": 10.8399, "radiusKm": 300 },
       "choices": ["In the Alps, between Austria and Italy", "In the Pyrenees, between France and Spain", "In the mountains of Norway"],
       "answer": 0,
-      "explanation": "Ötzi was found near the Tisenjoch pass in the Ötztal Alps, a few metres from the Austria–Italy border. He's now in a museum in Bolzano, Italy."
+      "explanation": "Ötzi was found near the Tisenjoch pass in the Ötztal Alps, about 90 metres from the Austria–Italy border, on the Italian side. He's now in a museum in Bolzano, Italy."
     },
     {
       "id": "abydos-ttl", "discovery": "abydos", "type": "two-truths-lie", "difficulty": "easy",
@@ -242,7 +242,7 @@
     },
     {
       "id": "indus-md", "discovery": "indus", "type": "map-detective", "difficulty": "easy",
-      "clue": "Another river civilization has appeared, in South Asia, along a river that flows from the Himalayas to the Arabian Sea. Tap it.",
+      "clue": "Another river civilization is taking shape in South Asia, along a river that flows from the Himalayas to the Arabian Sea. Tap it.",
       "hints": ["It's in South Asia.", "Look at today's Pakistan."],
       "target": { "kind": "state", "name": "Indus Valley Civilization" },
       "explanation": "The Indus civilization grew along the Indus River and its tributaries in today's Pakistan and north-west India. At its height it covered more land than Egypt or Mesopotamia."
@@ -279,7 +279,7 @@
     {
       "id": "wai-ch1", "checkpoint": "cp-3000", "type": "when-am-i", "difficulty": "medium",
       "title": "When am I? Chapter 1",
-      "intro": "Three maps from the last 400 years, with the year hidden. Use what you've seen to guess when each one is.",
+      "intro": "Three maps from between 3400 and 3000 BCE, with the year hidden. Use what you've seen to guess when each one is.",
       "range": [-3400, -3000], "rounds": 3, "tolerance": 0.5
     }
   ]

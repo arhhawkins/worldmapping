@@ -1,0 +1,732 @@
+{
+ "about": "Fact-checked display names for the map. Cliopatria sometimes keeps a name on a shape after a state was renamed or its regime ended, or puts a name on the wrong shape. Each fix gives the years (inclusive, negative = BCE) and the name to show, with a source. Countries still on today's map show their common short name (their Wikipedia title), except those listed in no_short_name.",
+ "fixes": [
+  {
+   "name": "Kingdom of Great Britain",
+   "from": 1801,
+   "to": 1921,
+   "display": "United Kingdom of Great Britain and Ireland",
+   "why": "The Acts of Union created the United Kingdom of Great Britain and Ireland on 1 January 1801.",
+   "source": "https://en.wikipedia.org/wiki/United_Kingdom_of_Great_Britain_and_Ireland"
+  },
+  {
+   "name": "Kingdom of Great Britain",
+   "from": 1922,
+   "to": 2024,
+   "display": "United Kingdom",
+   "why": "After the Irish Free State left in 1922 the state is the United Kingdom (of Great Britain and Northern Ireland).",
+   "source": "https://en.wikipedia.org/wiki/United_Kingdom"
+  },
+  {
+   "name": "Mali Federation",
+   "from": 1961,
+   "to": 2024,
+   "display": "Mali",
+   "why": "The Mali Federation broke up in August 1960; this shape is the Republic of Mali (Senegal is drawn separately).",
+   "source": "https://en.wikipedia.org/wiki/Mali"
+  },
+  {
+   "name": "Estado Novo",
+   "from": 1979,
+   "to": 2024,
+   "display": "Angola",
+   "why": "This shape is the Cabinda exclave, a province of Angola; Portugal's Estado Novo ended in 1974.",
+   "source": "https://en.wikipedia.org/wiki/Cabinda_Province"
+  },
+  {
+   "name": "Netherlands Antilles",
+   "from": 1815,
+   "to": 1953,
+   "display": "Dutch West Indies",
+   "why": "The Netherlands Antilles was only created in 1954; before that these islands (and Suriname, included in this shape) were the Dutch West Indies.",
+   "source": "https://en.wikipedia.org/wiki/Dutch_West_Indies"
+  },
+  {
+   "name": "Netherlands Antilles",
+   "from": 2010,
+   "to": 2024,
+   "display": "Dutch Caribbean",
+   "why": "The Netherlands Antilles was dissolved on 10 October 2010.",
+   "source": "https://en.wikipedia.org/wiki/Dutch_Caribbean"
+  },
+  {
+   "name": "Federated Republic of Germany",
+   "from": 1991,
+   "to": 2024,
+   "display": "Germany",
+   "why": "No state called 'Federated Republic of Germany' exists; it is Germany (Federal Republic of Germany).",
+   "source": "https://en.wikipedia.org/wiki/Germany"
+  },
+  {
+   "name": "Former Yugoslav Republic of Macedonia",
+   "from": 2019,
+   "to": 2024,
+   "display": "North Macedonia",
+   "why": "The country was renamed North Macedonia in February 2019.",
+   "source": "https://en.wikipedia.org/wiki/North_Macedonia"
+  },
+  {
+   "name": "French Fifth Republic",
+   "from": 1958,
+   "to": 2024,
+   "display": "France",
+   "why": "Regime-period name; on a map kids know the country as France.",
+   "source": "https://en.wikipedia.org/wiki/France"
+  },
+  {
+   "name": "Third Hellenic Republic",
+   "from": 1976,
+   "to": 2024,
+   "display": "Greece",
+   "why": "Historians' period name; the country is Greece.",
+   "source": "https://en.wikipedia.org/wiki/Greece"
+  },
+  {
+   "name": "Second Republic of Austria",
+   "from": 1946,
+   "to": 2024,
+   "display": "Austria",
+   "why": "Historians' period name; the country is Austria.",
+   "source": "https://en.wikipedia.org/wiki/Austria"
+  },
+  {
+   "name": "Communist Cuba",
+   "from": 1960,
+   "to": 2024,
+   "display": "Cuba",
+   "why": "A description, not the country's name.",
+   "source": "https://en.wikipedia.org/wiki/Cuba"
+  },
+  {
+   "name": "Communist Laos",
+   "from": 1976,
+   "to": 2024,
+   "display": "Laos",
+   "why": "A description, not the country's name.",
+   "source": "https://en.wikipedia.org/wiki/Laos"
+  },
+  {
+   "name": "Gaza/Hamas",
+   "from": 2014,
+   "to": 2024,
+   "display": "Gaza Strip",
+   "why": "The territory is the Gaza Strip; 'Gaza/Hamas' is not a place name.",
+   "source": "https://en.wikipedia.org/wiki/Gaza_Strip"
+  },
+  {
+   "name": "Mujahideen",
+   "from": 2014,
+   "to": 2024,
+   "display": "Syrian opposition",
+   "why": "This shape is the rebel-held part of Syria during the civil war, usually called the Syrian opposition.",
+   "source": "https://en.wikipedia.org/wiki/Syrian_opposition"
+  },
+  {
+   "name": "Union of Myanmar",
+   "from": 2011,
+   "to": 2024,
+   "display": "Myanmar",
+   "why": "Official name changed to Republic of the Union of Myanmar in 2011; common name Myanmar.",
+   "source": "https://en.wikipedia.org/wiki/Myanmar"
+  },
+  {
+   "name": "Eswatini",
+   "from": 1969,
+   "to": 2017,
+   "display": "Swaziland",
+   "why": "The country was called Swaziland until it was renamed Eswatini in 2018.",
+   "source": "https://en.wikipedia.org/wiki/Eswatini"
+  },
+  {
+   "name": "People's Republic of Angola",
+   "from": 1992,
+   "to": 2024,
+   "display": "Angola",
+   "why": "The People's Republic ended in 1992; the country is the Republic of Angola.",
+   "source": "https://en.wikipedia.org/wiki/Angola"
+  },
+  {
+   "name": "Republic of Poland",
+   "from": 1953,
+   "to": 1989,
+   "display": "Polish People's Republic",
+   "why": "Poland was the communist Polish People's Republic from 1952 until 1989.",
+   "source": "https://en.wikipedia.org/wiki/Polish_People%27s_Republic"
+  },
+  {
+   "name": "Kingdom of Bahrain",
+   "from": 1973,
+   "to": 2001,
+   "display": "Bahrain",
+   "why": "Bahrain was the State of Bahrain until it became a kingdom in 2002.",
+   "source": "https://en.wikipedia.org/wiki/Bahrain"
+  },
+  {
+   "name": "Federal Republic of Somalia",
+   "from": 1960,
+   "to": 2011,
+   "display": "Somalia",
+   "why": "The Federal Republic was only set up in 2012 (earlier the Somali Republic / Somali Democratic Republic).",
+   "source": "https://en.wikipedia.org/wiki/Somalia"
+  },
+  {
+   "name": "Republic of Fiji",
+   "from": 1973,
+   "to": 1986,
+   "display": "Fiji",
+   "why": "Fiji was a Commonwealth realm (Dominion of Fiji) until it became a republic in 1987.",
+   "source": "https://en.wikipedia.org/wiki/Fiji"
+  },
+  {
+   "name": "Republic of Trinidad and Tobago",
+   "from": 1963,
+   "to": 1975,
+   "display": "Trinidad and Tobago",
+   "why": "Trinidad and Tobago became a republic only in 1976.",
+   "source": "https://en.wikipedia.org/wiki/Trinidad_and_Tobago"
+  },
+  {
+   "name": "Turkish Republic of Northern Cyprus",
+   "from": 1976,
+   "to": 1982,
+   "display": "Turkish Federated State of Cyprus",
+   "why": "The TRNC was declared in November 1983; before that it was the Turkish Federated State of Cyprus.",
+   "source": "https://en.wikipedia.org/wiki/Turkish_Federated_State_of_Cyprus"
+  },
+  {
+   "name": "Republic of China",
+   "from": 1950,
+   "to": 2024,
+   "display": "Taiwan",
+   "why": "After 1949 the Republic of China governs only Taiwan; standard world maps label it Taiwan, which avoids confusion with the People's Republic of China.",
+   "source": "https://en.wikipedia.org/wiki/Taiwan"
+  },
+  {
+   "name": "Democratic People's Republic of Korea",
+   "from": 1948,
+   "to": 2024,
+   "display": "North Korea",
+   "why": "Official names of the two Koreas are easy to mix up; maps use North Korea.",
+   "source": "https://en.wikipedia.org/wiki/North_Korea"
+  },
+  {
+   "name": "Republic of Korea",
+   "from": 1948,
+   "to": 2024,
+   "display": "South Korea",
+   "why": "Official names of the two Koreas are easy to mix up; maps use South Korea.",
+   "source": "https://en.wikipedia.org/wiki/South_Korea"
+  },
+  {
+   "name": "Saint Kitts",
+   "from": 1967,
+   "to": 2024,
+   "display": "U.S. Virgin Islands",
+   "why": "This shape sits at 17.7N 64.8W, which is Saint Croix in the U.S. Virgin Islands, not Saint Kitts (17.3N 62.7W).",
+   "source": "https://en.wikipedia.org/wiki/Saint_Croix"
+  },
+  {
+   "name": "Saint Vincent",
+   "from": 1979,
+   "to": 2024,
+   "display": "Saint Vincent and the Grenadines",
+   "why": "The independent country (from 1979) is Saint Vincent and the Grenadines.",
+   "source": "https://en.wikipedia.org/wiki/Saint_Vincent_and_the_Grenadines"
+  },
+  {
+   "name": "South Africa",
+   "from": 1932,
+   "to": 1960,
+   "display": "Union of South Africa",
+   "why": "The country was the Union of South Africa until it became a republic in 1961.",
+   "source": "https://en.wikipedia.org/wiki/Union_of_South_Africa"
+  },
+  {
+   "name": "Sri Lanka",
+   "from": 1948,
+   "to": 1971,
+   "display": "Ceylon",
+   "why": "The country was called Ceylon until 1972.",
+   "source": "https://en.wikipedia.org/wiki/Dominion_of_Ceylon"
+  },
+  {
+   "name": "Republic of India",
+   "from": 1947,
+   "to": 1949,
+   "display": "Dominion of India",
+   "why": "India became a republic on 26 January 1950.",
+   "source": "https://en.wikipedia.org/wiki/Dominion_of_India"
+  },
+  {
+   "name": "Islamic Republic of Pakistan",
+   "from": 1947,
+   "to": 1955,
+   "display": "Dominion of Pakistan",
+   "why": "Pakistan became the Islamic Republic in 1956; before that it was the Dominion of Pakistan.",
+   "source": "https://en.wikipedia.org/wiki/Dominion_of_Pakistan"
+  },
+  {
+   "name": "Kingdom of Thailand",
+   "from": 1932,
+   "to": 1938,
+   "display": "Siam",
+   "why": "The country was renamed from Siam to Thailand in 1939.",
+   "source": "https://en.wikipedia.org/wiki/Thailand"
+  },
+  {
+   "name": "Tanzania",
+   "from": 1961,
+   "to": 1963,
+   "display": "Tanganyika",
+   "why": "Tanzania was formed when Tanganyika and Zanzibar united in April 1964.",
+   "source": "https://en.wikipedia.org/wiki/Tanganyika_(1961%E2%80%931964)"
+  },
+  {
+   "name": "Republic of Benin",
+   "from": 1961,
+   "to": 1974,
+   "display": "Dahomey",
+   "why": "The country was called Dahomey until 1975.",
+   "source": "https://en.wikipedia.org/wiki/Republic_of_Dahomey"
+  },
+  {
+   "name": "Burkina Faso",
+   "from": 1961,
+   "to": 1983,
+   "display": "Upper Volta",
+   "why": "The country was called Upper Volta until 1984.",
+   "source": "https://en.wikipedia.org/wiki/Republic_of_Upper_Volta"
+  },
+  {
+   "name": "Central African Republic",
+   "from": 1977,
+   "to": 1979,
+   "display": "Central African Empire",
+   "why": "Bokassa ruled the Central African Empire from December 1976 to September 1979.",
+   "source": "https://en.wikipedia.org/wiki/Central_African_Empire"
+  },
+  {
+   "name": "Papua New Guinea",
+   "from": 1946,
+   "to": 1974,
+   "display": "Territory of Papua and New Guinea",
+   "why": "Papua New Guinea was an Australian-run territory until independence in 1975.",
+   "source": "https://en.wikipedia.org/wiki/Territory_of_Papua_and_New_Guinea"
+  },
+  {
+   "name": "Kingdom of Cambodia",
+   "from": 1970,
+   "to": 1975,
+   "display": "Khmer Republic",
+   "why": "The monarchy was abolished in 1970; Cambodia was the Khmer Republic until 1975.",
+   "source": "https://en.wikipedia.org/wiki/Khmer_Republic"
+  },
+  {
+   "name": "Éire",
+   "from": 1938,
+   "to": 2024,
+   "display": "Ireland",
+   "why": "Éire is the Irish-language name; in English the state is Ireland.",
+   "source": "https://en.wikipedia.org/wiki/Republic_of_Ireland"
+  },
+  {
+   "name": "Bourbon Kingdom of France",
+   "from": 1830,
+   "to": 1847,
+   "display": "July Monarchy",
+   "why": "The Bourbons were overthrown in July 1830; Louis-Philippe ruled as King of the French until 1848.",
+   "source": "https://en.wikipedia.org/wiki/July_Monarchy"
+  },
+  {
+   "name": "Golden Horde",
+   "from": 1547,
+   "to": 1635,
+   "display": "Northern Yuan",
+   "why": "This shape is in Mongolia, far from the Golden Horde (which ended in 1502); it is the Mongol Northern Yuan.",
+   "source": "https://en.wikipedia.org/wiki/Northern_Yuan"
+  },
+  {
+   "name": "Golden Horde",
+   "from": 1636,
+   "to": 1695,
+   "display": "Khalkha Mongols",
+   "why": "After the Northern Yuan fell in 1635 this part of Mongolia was ruled by the Khalkha Mongol khans.",
+   "source": "https://en.wikipedia.org/wiki/Khalkha_Mongols"
+  },
+  {
+   "name": "Argentine Confederation",
+   "from": 1862,
+   "to": 1929,
+   "display": "Argentina",
+   "why": "The Confederation ended in 1861 when Buenos Aires rejoined; the country is the Argentine Republic.",
+   "source": "https://en.wikipedia.org/wiki/Argentina"
+  },
+  {
+   "name": "British East Africa",
+   "from": 1961,
+   "to": 1968,
+   "display": "British Africa",
+   "why": "This shape is all the British colonies left in Africa (from the Gambia to Bechuanaland), not British East Africa, which ended in 1920.",
+   "source": "https://en.wikipedia.org/wiki/East_Africa_Protectorate"
+  },
+  {
+   "name": "British East Africa",
+   "from": 1969,
+   "to": 1972,
+   "display": "Seychelles",
+   "why": "This shape is the Seychelles, a British colony until 1976.",
+   "source": "https://en.wikipedia.org/wiki/Seychelles"
+  },
+  {
+   "name": "Later Jin Dynasty",
+   "from": 1636,
+   "to": 1644,
+   "display": "Qing Dynasty",
+   "why": "Hong Taiji renamed the Later Jin as the Qing in 1636.",
+   "source": "https://en.wikipedia.org/wiki/Later_Jin_(1616%E2%80%931636)"
+  },
+  {
+   "name": "Southern Ming",
+   "from": 1662,
+   "to": 1672,
+   "display": "Kingdom of Tungning",
+   "why": "The Southern Ming ended in 1662; this Taiwan shape is the Zheng family's Kingdom of Tungning.",
+   "source": "https://en.wikipedia.org/wiki/Kingdom_of_Tungning"
+  },
+  {
+   "name": "Inca Empire",
+   "from": 1540,
+   "to": 1571,
+   "display": "Neo-Inca State",
+   "why": "The empire fell to Spain in the 1530s; this small Vilcabamba shape is the Neo-Inca State (1537-1572).",
+   "source": "https://en.wikipedia.org/wiki/Neo-Inca_State"
+  },
+  {
+   "name": "First Toungoo Empire",
+   "from": 1600,
+   "to": 1752,
+   "display": "Restored Toungoo Kingdom",
+   "why": "The First Toungoo Empire collapsed in 1599; the restored (Nyaungyan) Toungoo kingdom ruled until 1752.",
+   "source": "https://en.wikipedia.org/wiki/Toungoo_dynasty"
+  },
+  {
+   "name": "Oirat Confederation",
+   "from": 1634,
+   "to": 1676,
+   "display": "Dzungar Khanate",
+   "why": "The Dzungar Khanate was founded in 1634 (the data already uses that name from 1677).",
+   "source": "https://en.wikipedia.org/wiki/Dzungar_Khanate"
+  },
+  {
+   "name": "Swedish Empire",
+   "from": 1721,
+   "to": 1814,
+   "display": "Kingdom of Sweden",
+   "why": "Sweden's era as an empire (great power) ended with the Treaty of Nystad in 1721.",
+   "source": "https://en.wikipedia.org/wiki/Swedish_Empire"
+  },
+  {
+   "name": "Khmer Empire",
+   "from": 1432,
+   "to": 1867,
+   "display": "Kingdom of Cambodia",
+   "why": "The Khmer Empire ended with the fall of Angkor in 1431; the later state is the Cambodian kingdom.",
+   "source": "https://en.wikipedia.org/wiki/Post-Angkor_period"
+  },
+  {
+   "name": "Denmark-Norway",
+   "from": 1814,
+   "to": 1940,
+   "display": "Denmark",
+   "why": "Denmark lost Norway in 1814 (Treaty of Kiel); this shape is Denmark and its North Atlantic lands.",
+   "source": "https://en.wikipedia.org/wiki/Denmark%E2%80%93Norway"
+  },
+  {
+   "name": "Batavian Republic",
+   "from": 1806,
+   "to": 1810,
+   "display": "Kingdom of Holland",
+   "why": "Napoleon replaced the Batavian Republic with the Kingdom of Holland in 1806.",
+   "source": "https://en.wikipedia.org/wiki/Kingdom_of_Holland"
+  },
+  {
+   "name": "New France",
+   "from": 1763,
+   "to": 1791,
+   "display": "French colonial empire",
+   "why": "France gave up New France (Canada) in 1763; what is left in this shape is France's other colonies (Caribbean, Guiana, Saint-Pierre).",
+   "source": "https://en.wikipedia.org/wiki/French_colonial_empire"
+  },
+  {
+   "name": "First Hellenic Republic",
+   "from": 1833,
+   "to": 1923,
+   "display": "Kingdom of Greece",
+   "why": "The First Hellenic Republic ended in 1832, when Greece became a kingdom.",
+   "source": "https://en.wikipedia.org/wiki/Kingdom_of_Greece"
+  },
+  {
+   "name": "First Hellenic Republic",
+   "from": 1924,
+   "to": 1935,
+   "display": "Second Hellenic Republic",
+   "why": "Greece was a republic again from 1924 to 1935.",
+   "source": "https://en.wikipedia.org/wiki/Second_Hellenic_Republic"
+  },
+  {
+   "name": "First Hellenic Republic",
+   "from": 1936,
+   "to": 1940,
+   "display": "Kingdom of Greece",
+   "why": "The monarchy was restored in late 1935.",
+   "source": "https://en.wikipedia.org/wiki/Kingdom_of_Greece"
+  },
+  {
+   "name": "Kingdom of Georgia",
+   "from": 1478,
+   "to": 1578,
+   "display": "Kingdom of Kartli",
+   "why": "The united Kingdom of Georgia split three ways from 1478; this shape (around Tbilisi) is Kartli.",
+   "source": "https://en.wikipedia.org/wiki/Kingdom_of_Kartli"
+  },
+  {
+   "name": "Kingdom of Georgia",
+   "from": 1706,
+   "to": 1762,
+   "display": "Kingdom of Kartli",
+   "why": "Georgia was split into separate kingdoms; this shape is Kartli (Kakheti is drawn separately).",
+   "source": "https://en.wikipedia.org/wiki/Kingdom_of_Kartli"
+  },
+  {
+   "name": "Kingdom of Georgia",
+   "from": 1763,
+   "to": 1802,
+   "display": "Kingdom of Kartli-Kakheti",
+   "why": "Kartli and Kakheti were united as the Kingdom of Kartli-Kakheti in 1762 until Russian annexation in 1801.",
+   "source": "https://en.wikipedia.org/wiki/Kingdom_of_Kartli-Kakheti"
+  },
+  {
+   "name": "Đại Việt",
+   "from": 1683,
+   "to": 1833,
+   "display": "Panduranga",
+   "why": "This small shape on the south-central coast is the last Cham principality, Panduranga, not Đại Việt.",
+   "source": "https://en.wikipedia.org/wiki/Panduranga_(Champa)"
+  },
+  {
+   "name": "People's Republic of Kampuchea",
+   "from": 1989,
+   "to": 1992,
+   "display": "State of Cambodia",
+   "why": "The People's Republic of Kampuchea was renamed the State of Cambodia in 1989.",
+   "source": "https://en.wikipedia.org/wiki/People%27s_Republic_of_Kampuchea"
+  },
+  {
+   "name": "People's Republic of Kampuchea",
+   "from": 1993,
+   "to": 1995,
+   "display": "Kingdom of Cambodia",
+   "why": "The monarchy was restored in 1993.",
+   "source": "https://en.wikipedia.org/wiki/Cambodia"
+  },
+  {
+   "name": "Principality of Bulgaria",
+   "from": 1908,
+   "to": 1944,
+   "display": "Kingdom of Bulgaria",
+   "why": "Bulgaria declared independence as a kingdom (tsardom) in 1908.",
+   "source": "https://en.wikipedia.org/wiki/Kingdom_of_Bulgaria"
+  },
+  {
+   "name": "Astrakhan Khanate",
+   "from": 1642,
+   "to": 1768,
+   "display": "Don Cossacks",
+   "why": "Russia conquered Astrakhan in 1556; this shape on the Don is the same one the data calls Don Cossacks until 1641.",
+   "source": "https://en.wikipedia.org/wiki/Don_Cossacks"
+  },
+  {
+   "name": "United Principalities of Moldavia and Wallachia",
+   "from": 1881,
+   "to": 1916,
+   "display": "Kingdom of Romania",
+   "why": "Romania became a kingdom in 1881.",
+   "source": "https://en.wikipedia.org/wiki/Kingdom_of_Romania"
+  },
+  {
+   "name": "Sultanate of Aceh",
+   "from": 1946,
+   "to": 1959,
+   "display": "Aceh",
+   "why": "The Aceh Sultanate ended with the Dutch conquest in 1903-04; after 1945 Aceh was a region of Indonesia.",
+   "source": "https://en.wikipedia.org/wiki/Aceh_Sultanate"
+  },
+  {
+   "name": "Kingdom of Lithuania",
+   "from": 1919,
+   "to": 1939,
+   "display": "Republic of Lithuania",
+   "why": "The 1918 plan for a Kingdom of Lithuania was abandoned that year; interwar Lithuania was a republic.",
+   "source": "https://en.wikipedia.org/wiki/Kingdom_of_Lithuania_(1918)"
+  },
+  {
+   "name": "Natalia Republic",
+   "from": 1843,
+   "to": 1910,
+   "display": "Colony of Natal",
+   "why": "Britain annexed the Natalia Republic in 1843 as the Colony of Natal.",
+   "source": "https://en.wikipedia.org/wiki/Colony_of_Natal"
+  },
+  {
+   "name": "Portuguese Ceylon",
+   "from": 1659,
+   "to": 1686,
+   "display": "Dutch Ceylon",
+   "why": "The Dutch had taken all Portuguese forts in Ceylon by 1658.",
+   "source": "https://en.wikipedia.org/wiki/Dutch_Ceylon"
+  },
+  {
+   "name": "Helvetic Republic",
+   "from": 1803,
+   "to": 1814,
+   "display": "Swiss Confederation",
+   "why": "Napoleon's Act of Mediation ended the Helvetic Republic in 1803 and restored the Swiss Confederation.",
+   "source": "https://en.wikipedia.org/wiki/Act_of_Mediation"
+  },
+  {
+   "name": "County of Savoy",
+   "from": 1416,
+   "to": 1539,
+   "display": "Duchy of Savoy",
+   "why": "The County of Savoy was raised to a duchy in 1416.",
+   "source": "https://en.wikipedia.org/wiki/Duchy_of_Savoy"
+  },
+  {
+   "name": "Republic of Florence",
+   "from": 1532,
+   "to": 1568,
+   "display": "Duchy of Florence",
+   "why": "The Republic of Florence ended in 1532 when the Medici became dukes.",
+   "source": "https://en.wikipedia.org/wiki/Duchy_of_Florence"
+  },
+  {
+   "name": "Republic of Florence",
+   "from": 1569,
+   "to": 1737,
+   "display": "Grand Duchy of Tuscany",
+   "why": "The Duchy of Florence became the Grand Duchy of Tuscany in 1569.",
+   "source": "https://en.wikipedia.org/wiki/Grand_Duchy_of_Tuscany"
+  },
+  {
+   "name": "County of Urgell",
+   "from": 1279,
+   "to": 1808,
+   "display": "Andorra",
+   "why": "This tiny shape is Andorra, a co-principality since the 1278 paréage (the data calls it Principality of Andorra from 1815).",
+   "source": "https://en.wikipedia.org/wiki/Andorra"
+  },
+  {
+   "name": "Septinsular Republic",
+   "from": 1815,
+   "to": 1819,
+   "display": "United States of the Ionian Islands",
+   "why": "The Septinsular Republic ended in 1807; from 1815 the islands were the British-protected United States of the Ionian Islands.",
+   "source": "https://en.wikipedia.org/wiki/United_States_of_the_Ionian_Islands"
+  },
+  {
+   "name": "Cispadane Republic",
+   "from": 1800,
+   "to": 1802,
+   "display": "Cisalpine Republic",
+   "why": "The Cispadane Republic merged into the Cisalpine Republic in 1797, which was restored in 1800.",
+   "source": "https://en.wikipedia.org/wiki/Cisalpine_Republic"
+  },
+  {
+   "name": "Italian Republic",
+   "from": 1805,
+   "to": 1813,
+   "display": "Kingdom of Italy",
+   "why": "Napoleon turned the Italian Republic into the Kingdom of Italy in 1805.",
+   "source": "https://en.wikipedia.org/wiki/Kingdom_of_Italy_(Napoleonic)"
+  },
+  {
+   "name": "Maynila",
+   "from": 1572,
+   "to": 1599,
+   "display": "Ryukyu Kingdom",
+   "why": "This shape is the Ryukyu Islands (around Okinawa), not Maynila (Manila), which Spain took in 1571.",
+   "source": "https://en.wikipedia.org/wiki/Ryukyu_Kingdom"
+  },
+  {
+   "name": "People's Republic of Zanzibar",
+   "from": 1856,
+   "to": 1889,
+   "display": "Sultanate of Zanzibar",
+   "why": "In the 1800s Zanzibar was a sultanate; the People's Republic existed only in 1964.",
+   "source": "https://en.wikipedia.org/wiki/Sultanate_of_Zanzibar"
+  },
+  {
+   "name": "Empire of Haiti",
+   "from": 1807,
+   "to": 1848,
+   "display": "Haiti",
+   "why": "The First Empire ended when Dessalines was killed in 1806; Haiti then split into a northern state/kingdom and a southern republic, reunited as the Republic of Haiti in 1820 (1849-1858 is correctly the Second Empire).",
+   "source": "https://en.wikipedia.org/wiki/First_Empire_of_Haiti"
+  },
+  {
+   "name": "Empire of Haiti",
+   "from": 1859,
+   "to": 1915,
+   "display": "Republic of Haiti",
+   "why": "Haiti was a republic after the Second Empire fell in 1859.",
+   "source": "https://en.wikipedia.org/wiki/Second_Empire_of_Haiti"
+  },
+  {
+   "name": "Duchy of Mecklenburg",
+   "from": 1806,
+   "to": 1870,
+   "display": "Mecklenburg-Schwerin",
+   "why": "Mecklenburg was split in 1701; this shape is Mecklenburg-Schwerin (a grand duchy from 1815).",
+   "source": "https://en.wikipedia.org/wiki/Grand_Duchy_of_Mecklenburg-Schwerin"
+  },
+  {
+   "name": "Sur Empire",
+   "from": 1557,
+   "to": 1578,
+   "display": "Sultanate of Bengal",
+   "why": "The Sur Empire ended in 1556-57; this Bengal shape is the Bengal Sultanate under Sur-descended and then Karrani rulers.",
+   "source": "https://en.wikipedia.org/wiki/Bengal_Sultanate"
+  },
+  {
+   "name": "Sultanate of Oman",
+   "from": 1856,
+   "to": 1899,
+   "display": "Muscat and Oman",
+   "why": "From 1856 to 1970 the country was the Sultanate of Muscat and Oman; it took the name Oman in 1970.",
+   "source": "https://en.wikipedia.org/wiki/Muscat_and_Oman"
+  },
+  {
+   "name": "Estado Novo",
+   "from": 1926,
+   "to": 1932,
+   "display": "Ditadura Nacional",
+   "why": "The Estado Novo began with the 1933 constitution; 1926-1933 was the military Ditadura Nacional.",
+   "source": "https://en.wikipedia.org/wiki/Ditadura_Nacional"
+  }
+ ],
+ "no_short_name": [
+  "Republic of China",
+  "Sultanate of Brunei",
+  "Second Republic of Austria",
+  "Kingdom of Great Britain",
+  "Estado Novo",
+  "Mali Federation",
+  "Mujahideen",
+  "Saint Kitts",
+  "Netherlands Antilles",
+  "Éire",
+  "British Overseas Territories",
+  "Russian-occupied territories"
+ ],
+ "notes": "1) Present-day names: about 106 of the 192 names on the 2024 map are long official or regime forms (Republic of X, Kingdom of X, State of X, Commonwealth of X, People's/Islamic/Federal Republic of X, Swiss Confederation, Russian Federation, United States of America). Rather than 106 renames, recommended rule: for any polity still drawn in the latest year (2024, shown to 2026), display its common short name. The Cliopatria Wikipedia title (the 'wiki' array in raw/build-cache/polities.json) already gives that short name for nearly all of them (Egypt, Argentina, Australia, The Bahamas, Ivory Coast, Cape Verde, Russia, Switzerland, United States...); drop a leading 'The' if you prefer 'Bahamas'/'Gambia'. Do not use the wiki title for these, which are covered by explicit fixes or have unusable titles: Republic of China ('Republic of China (1912-1949)'), Sultanate of Brunei ('Bruneian Sultanate (1368-1888)' -> use 'Brunei'), Second Republic of Austria ('History of Austria'), Kingdom of Great Britain ('Great Britain'), Estado Novo, Mali Federation, Gaza/Hamas, Mujahideen, Saint Kitts, Netherlands Antilles, Éire, British Overseas Territories, Russian-occupied territories. Apply explicit fixes before the rule, so that historical spans (e.g. Ceylon 1948-1971, Upper Volta, Dahomey, Polish People's Republic) keep their period names. 2) Systemic cause of most historical errors: Cliopatria carries a name forward on a shape after the state changed its name or regime (UK after 1801, Denmark after 1814, Greece after 1832, Bulgaria 1908, Romania 1881, Sweden after 1721, Savoy 1416, Florence/Tuscany, Prussia, Napoleonic Italy and Holland, Swiss Mediation, Lithuania, many renamed ex-colonies). 3) Second systemic issue: some names sit on a shape that is somewhere else entirely; the fixes rename them to what the shape actually is: Golden Horde 1547-1695 is in Mongolia; Astrakhan Khanate 1642-1768 is the Don Cossack shape; Maynila 1572-1599 is the Ryukyu Islands; County of Urgell 1279-1808 is Andorra; Đại Việt 1683-1833 is Panduranga; Estado Novo 1979-2024 is Cabinda; Saint Kitts is drawn on Saint Croix (so the real Saint Kitts and Nevis is missing from the map); British East Africa 1961-1972 is all remaining British Africa then the Seychelles; New Netherland 1670-1802 and Netherlands Antilles before 1954 are the Dutch Caribbean plus Suriname. 4) Border/data problems noticed but not fixed (names are fine or out of scope): the Netherlands Antilles shape still includes Suriname in 1976-2023, overlapping Republic of Suriname; Russian-occupied territories is drawn from 1992 and includes Crimea before 2014; Republic of China 1950-2023 still includes Hainan; Maynila 1521-1571 is merged with Ryukyu; Brandenburg-Prussia 1702-1717 overlaps Kingdom of Prussia; the 2024 frame (shown through 2026) predates the fall of the Assad government in December 2024. 5) Clearly wrong but left alone because there is no single correct name for the shape: Maratha Empire 1820-1845 (Scindia/Holkar princely states in Malwa), Regency of Algiers 1830-1845 (unconquered interior: Constantine beylik, Abdelkader's emirate), Grand Duchy of Berg 1815-1827 (shape lies in Hesse/Thuringia, not Berg), Sultanate of Malacca 1512-1861 (assorted Malay/Sumatran shapes), Sur Empire 1579-1594 (Afghan remnant in Orissa), Southern Ming 1673-1682 (Three Feudatories plus Tungning), Saadi Sultanate 1670-1740 and Songhai Empire 1595-1608 (tiny remnant shapes). Left as small offsets or style: Timurid Empire to 1528, Estado Novo 1974-1975, Sikh Confederacy to 1806, Ahmadnagar to 1652, Gorkha Kingdom 1769-1787, Septinsular Republic 1807-1814 (French rule), Ligurian Republic 1814 (Genoa briefly restored), Sultanate of Zanzibar 1964-1966, Emirate of Nejd 1921-1925 (Sultanate of Nejd), Kosovo 2000-2007 (UN administration), Great Mongol State (correct: it was the Bogd Khanate's own name). The Wikidata flags for Mexico, Japan, Syria, Romania, Joseon, Lebanon, Luxembourg, Slovakia, Serbia 1918, Republic of Yemen and the 'Federated Republic of Mexico' 1836-1847 are wrong-entity or civil-war matches; those names are fine. 6) July Monarchy: English Wikipedia gives the official name as 'Kingdom of France' (Louis-Philippe was 'King of the French'), not 'Kingdom of the French', so the fix uses the unambiguous 'July Monarchy'. 7) Fixes use calendar years inclusive and may start part-way through a data row (e.g. UK from 1801 inside the 1800-1819 row); resolve the display name per year, not per row."
+}

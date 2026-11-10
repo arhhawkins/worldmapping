@@ -307,7 +307,7 @@ html[data-motion="reduce"] #vbanner.show{animation:none;opacity:1}
 <body>
 <div id="wrap">
   <div id="mapbox">
-    <canvas id="map" aria-label="Map of the world's states in the selected year"></canvas>
+    <canvas id="map" aria-label="Map of the world's countries in the selected year"></canvas>
     <div id="pins" aria-label="Discoveries on the map"></div>
     <div id="marquee" aria-hidden="true"><i class="t"></i><i class="r"></i><i class="b"></i><i class="l"></i></div>
     <div id="plate">
@@ -332,7 +332,7 @@ html[data-motion="reduce"] #vbanner.show{animation:none;opacity:1}
     </div>
     <div id="toast" hidden role="status"></div>
     <input type="file" id="importFile" accept=".json,application/json" hidden>
-    <div id="credit">Borders: Cliopatria (Seshat), CC BY 4.0. Coastlines: Natural Earth.</div>
+    <div id="credit">Borders: Cliopatria (Seshat), CC BY 4.0. Land and relief: Natural Earth. Events: Wikidata.</div>
     <div id="intro" hidden>
       <div class="card" role="dialog" aria-labelledby="introT">
         <h2 id="introT">Atlas of Time</h2>
@@ -341,7 +341,7 @@ html[data-motion="reduce"] #vbanner.show{animation:none;opacity:1}
           <li><b>Explore</b> the glowing pins on the map.</li>
           <li><b>Play challenges</b> to earn ✦ Insight. Get them right first time for the most.</li>
           <li><b>Spend Insight</b> to move time forward and watch the world change.</li>
-          <li><b>Tap any state</b> to see what it was like, with pictures, and stamp your passport.</li>
+          <li><b>Tap any country</b> to see what it was like, with pictures, and stamp your passport.</li>
         </ol>
         <p class="muted" style="font-size:calc(15px*var(--ts))">This is a prototype. The stories and questions are drafts that still need fact-checking.</p>
         <label class="field" style="flex-direction:column;gap:4px;margin-top:4px"><span class="muted" style="font-size:calc(15px*var(--ts))">Name this adventure (you can have several)</span><input id="introName" maxlength="30" placeholder="e.g. Sam’s expedition" autocomplete="off"></label>
@@ -374,13 +374,15 @@ html[data-motion="reduce"] #vbanner.show{animation:none;opacity:1}
 <script id="polities" type="application/json">__POLITIES__</script>
 <script id="landdata" type="application/json">__LAND__</script>
 <script id="gamecontent" type="application/json">__CONTENT__</script>
+<script id="relief" type="text/plain">__RELIEF__</script>
+<script id="eventdata" type="application/json">__EVENTS__</script>
 <script>/* d3 v7.9.0, ISC licence, inlined so the page works offline */
 __D3__</script>
 <script>
 (function(){
 'use strict';
 /* ---------- time helpers (same stretched scale as the atlas) ---------- */
-const YMIN=-3400, YMAX=2024, POW=2.4;
+const YMIN=-3400, YMAX=2026, POW=2.4;
 const clamp01=t=>Math.max(0,Math.min(1,t));
 const yearAt=t=>Math.round(YMAX-(YMAX-YMIN)*Math.pow(1-clamp01(t),POW));
 const tAt=y=>1-Math.pow((YMAX-y)/(YMAX-YMIN),1/POW);
@@ -404,7 +406,7 @@ const TYPE={'two-truths-lie':'Two Truths & a Lie','map-detective':'Map Detective
 /* ---------- saves: several named adventures, plus download / load from a file ---------- */
 const STORE_KEY='worldmapping.atlasOfTime.saves.v2', OLD_KEY='worldmapping.atlasOfTime.v1', MAX_SLOTS=6, SAVE_FORMAT=2;
 const newState=()=>({v:2,cp:0,maxCp:0,insight:0,res:{},seen:{},mode:'adventure',waiBest:{},stamps:{},ticks:0,spins:[]});
-const store={active:null,slots:{},settings:{ts:'standard',theme:'auto',motion:'auto',vegas:'off',sound:'on',volume:'medium'}};
+const store={active:null,slots:{},settings:{ts:'standard',theme:'auto',motion:'auto',vegas:'off',sound:'on',volume:'medium',events:'on'}};
 let S=newState(), hadSave=false, saveNote='', storageOK=true;
 const isObj=o=>!!o&&typeof o==='object'&&!Array.isArray(o);
 const newId=()=>'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -436,7 +438,7 @@ function loadStore(){
   if(raw){
     try{
       const st=JSON.parse(raw); let skipped=0;
-      if(isObj(st.settings)) for(const k of ['ts','theme','motion','vegas','sound','volume']) if(typeof st.settings[k]==='string') store.settings[k]=st.settings[k];
+      if(isObj(st.settings)) for(const k of ['ts','theme','motion','vegas','sound','volume','events']) if(typeof st.settings[k]==='string') store.settings[k]=st.settings[k];
       if(isObj(st.slots)) for(const [id,sl] of Object.entries(st.slots)){
         const s=isObj(sl)&&cleanState(sl.state);
         if(s&&typeof sl.name==='string') store.slots[id]={name:sl.name.slice(0,40)||'Adventure',created:+sl.created||Date.now(),updated:+sl.updated||Date.now(),state:s};
@@ -555,6 +557,361 @@ function ringOf(k){
 }
 // a state's polygons, minus any rings too small to draw
 function polysOf(polys){return polys.map(p=>p.map(ringOf)).filter(p=>p[0]).map(p=>p.filter(Boolean))}
+/* ---------- names that change over time (fact-checked fixes from the build) ---------- */
+let aliasBy=new Map();
+function loadAliases(list){aliasBy=new Map();for(const [n,a,b,d] of list||[]){if(!aliasBy.has(n))aliasBy.set(n,[]);aliasBy.get(n).push([a,b,d])}}
+function nameAt(n,y){const l=aliasBy.get(n);if(l)for(const [a,b,d] of l)if(a<=y&&y<=b)return d;return names[n]}
+const labelName=f=>nameAt(f.n,year);
+
+/* ---------- events: a dot, a line, and the name on the line ---------- */
+let EVENTS=[],eventBoxes=[];
+function loadEvents(){try{EVENTS=JSON.parse(document.getElementById('eventdata').textContent).events||[]}catch(e){EVENTS=[]}}
+const EV_ICON={battle:'⚔',siege:'⚔',war:'⚔',invasion:'⚔',conquest:'⚔',operation:'⚔',treaty:'📜',convention:'📜',congress:'📜',
+  revolution:'✊',rebellion:'✊',coup:'✊',protest:'✊',assassination:'🗡',expedition:'🧭',earthquake:'⚠',eruption:'🌋',disaster:'⚠',fire:'🔥',epidemic:'🦠',pandemic:'🦠'};
+const EV_KIND={operation:'military operation',war:'war',battle:'battle',siege:'siege',treaty:'treaty',convention:'convention',congress:'congress',revolution:'revolution',rebellion:'uprising',coup:'coup',
+  assassination:'assassination',expedition:'expedition',earthquake:'earthquake',eruption:'volcanic eruption',disaster:'disaster',fire:'great fire',epidemic:'epidemic',pandemic:'pandemic',invasion:'invasion',conquest:'conquest',protest:'protest',attack:'attack'};
+// The slider moves in bigger steps further back in time, so older events stay up a little longer.
+const eventPad=y=>y<-500?25:y<0?10:y<500?6:y<1000?4:y<1500?2:y<1800?1:0;
+const eventYears=e=>e.y1>e.y0?fmtFull(e.y0)+' to '+fmtFull(e.y1):fmtFull(e.y0);
+function placeEvents(taken){
+  const k=transform.k,ts=theme.ts||1,pad=eventPad(year),out=[],boxes=[...taken];
+  const vis=EVENTS.filter(e=>e.y0-pad<=year&&year<=e.y1+pad&&(e.tier===2||k>=1.3)).sort((a,b)=>b.tier-a.tier||b.sl-a.sl);
+  const maxN=Math.round(Math.min(11,3+W*H/90000));
+  ctx.save(); ctx.setTransform(DPR,0,0,DPR,0,0);
+  const hit=b=>boxes.some(o=>!(b[2]<o[0]||b[0]>o[2]||b[3]<o[1]||b[1]>o[3]));
+  for(const e of vis){
+    if(out.length>=maxN) break;
+    const [x,y]=screenAt([e.lon,e.lat]); if(x<6||y<6||x>W-6||y>H-6) continue;
+    if(hit([x-4,y-4,x+4,y+4])) continue; // its dot would sit under another label
+    const size=(e.tier===2?15:13)*ts;
+    ctx.font=`${e.tier===2?600:500} ${size}px "EB Garamond", Garamond, serif`;
+    const txt=(EV_ICON[e.kind]||'◆')+' '+e.name, w=ctx.measureText(txt).width+8;
+    let best=null;
+    for(const len of [30,48,70,96]) for(const [dx,dy] of [[1,-1],[-1,-1],[1,1],[-1,1]]){
+      const ex=x+dx*len*.75, ey=y+dy*len*.65, hx=ex+dx*w;
+      const box=[Math.min(ex,hx),ey-size-3,Math.max(ex,hx),ey+3];
+      if(box[0]<4||box[2]>W-4||box[1]<4||box[3]>H-4) continue;
+      if(hit(box)) continue;
+      // the leader line mustn't run through another label either
+      let crosses=false;
+      for(let i=1;i<6&&!crosses;i++){const t=i/6,px=x+(ex-x)*t,py=y+(ey-y)*t;if(hit([px-1,py-1,px+1,py+1]))crosses=true}
+      if(crosses) continue;
+      best={e,x,y,ex,ey,hx,dx,txt,size,box}; break;
+    }
+    if(!best) continue;
+    out.push(best); boxes.push(best.box,[x-5,y-5,x+5,y+5]);
+    for(let i=1;i<6;i++){const t=i/6,px=x+(best.ex-x)*t,py=y+(best.ey-y)*t;boxes.push([px-2,py-2,px+2,py+2])} // keep later labels off this line
+  }
+  ctx.restore(); return out;
+}
+function drawEvents(list){
+  ctx.save(); ctx.setTransform(DPR,0,0,DPR,0,0); ctx.lineJoin='round'; ctx.lineCap='round';
+  for(const p of list){
+    const strokeLine=()=>{ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.ex,p.ey);ctx.lineTo(p.hx,p.ey);ctx.stroke()};
+    ctx.strokeStyle=theme.halo; ctx.lineWidth=3.5; strokeLine();
+    ctx.strokeStyle=theme.accent; ctx.lineWidth=p.e.tier===2?1.6:1.1; strokeLine();
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.e.tier===2?4.5:3.5,0,Math.PI*2);
+    ctx.fillStyle=theme.accent; ctx.fill(); ctx.lineWidth=1.5; ctx.strokeStyle=theme.halo; ctx.stroke();
+    ctx.font=`${p.e.tier===2?600:500} ${p.size}px "EB Garamond", Garamond, serif`;
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    const tx=Math.min(p.ex,p.hx)+4, ty=p.ey-4;
+    ctx.lineWidth=3; ctx.strokeStyle=theme.halo; ctx.strokeText(p.txt,tx,ty);
+    ctx.fillStyle=theme.label; ctx.fillText(p.txt,tx,ty);
+  }
+  ctx.restore();
+  eventBoxes=list.map(p=>({e:p.e,x:p.x,y:p.y,box:[p.box[0]-2,p.box[1]-3,p.box[2]+2,p.box[3]+4]}));
+}
+function eventAt(cx,cy){
+  for(const b of eventBoxes) if((cx>=b.box[0]&&cx<=b.box[2]&&cy>=b.box[1]&&cy<=b.box[3])||Math.hypot(cx-b.x,cy-b.y)<10) return b.e;
+  return null;
+}
+
+/* ---------- land detail: relief, lakes, rivers, terrain names ---------- */
+let lakes=null,coast=null,rivers=[],terrain=[],LQ=50,lakesPath=null,coastPath=null,riverPaths=[],reliefImg=null;
+function decodeLine(r,q){const out=[];let x=0,y=0;for(let i=0;i<r.length;i+=2){x+=r[i];y+=r[i+1];out.push([x/q,y/q])}return out}
+function loadLayers(L){
+  LQ=L.q;
+  land=fixWinding({type:'MultiPolygon',coordinates:L.land.map(p=>decode(p,LQ))});
+  lakes=fixWinding({type:'MultiPolygon',coordinates:L.lakes.map(p=>decode(p,LQ))});
+  coast=fixWinding({type:'MultiPolygon',coordinates:L.coast.map(p=>decode(p,LQ))});
+  rivers=L.rivers.map(([r,l])=>({r,g:{type:'LineString',coordinates:decodeLine(l,LQ)}}));
+  terrain=L.terrain.map(([name,kind,rank,lon,lat,wd])=>({name,kind,rank,ll:[lon,lat],wd}));
+  const src=(document.getElementById('relief')||{}).textContent||'';
+  if(src.startsWith('data:image')){reliefImg=new Image();reliefImg.onload=()=>{if(typeof redraw==='function')redraw();else draw()};reliefImg.src=src.trim()}
+}
+function buildLayers(){
+  lakesPath=new Path2D(); d3.geoPath(projection,lakesPath)(lakes);
+  coastPath=new Path2D(); d3.geoPath(projection,coastPath)(coast);
+  riverPaths=[new Path2D(),new Path2D(),new Path2D()];
+  for(const r of rivers) d3.geoPath(projection,riverPaths[r.r<=2?0:r.r<=4?1:2])(r.g);
+}
+// Shaded relief. Natural Earth projection keeps each line of latitude straight, so every
+// screen row is one stretched row of the plain lat/long relief image: a cheap exact reprojection.
+// The view-sized layer is cached and only redrawn once the map settles; while it moves,
+// the cached layer is shifted and scaled to follow.
+const rl={key:'',cv:null,pending:'',since:0,t:0,T:null};
+function viewKey(){return [W,H,DPR,transform.x.toFixed(1),transform.y.toFixed(1),transform.k.toFixed(4)].join('|')}
+function settled(cache,key){
+  if(cache.key===key) return true;
+  const now=performance.now();
+  if(cache.pending!==key){cache.pending=key;cache.since=now}
+  if(!cache.cv||now-cache.since>=160) return false; // time to (re)draw it
+  clearTimeout(cache.t); cache.t=setTimeout(redrawSoon,200); return null; // still moving: reuse the old one
+}
+function drawCached(cache,op,alpha){
+  const T=cache.T,s=transform.k/T.k;
+  ctx.save(); ctx.globalCompositeOperation=op; ctx.globalAlpha=alpha;
+  ctx.setTransform(DPR*s,0,0,DPR*s,DPR*(transform.x-T.x*s),DPR*(transform.y-T.y*s));
+  ctx.drawImage(cache.cv,0,0,W,H); ctx.restore();
+}
+function drawRelief(){
+  const img=reliefImg; if(!img||!img.complete||!img.naturalWidth) return;
+  const key=viewKey();
+  if(settled(rl,key)===false){
+    const k=transform.k,iw=img.naturalWidth,ih=img.naturalHeight,cx=projection([0,0])[0];
+    const cv=rl.cv||document.createElement('canvas'); cv.width=canvas.width; cv.height=canvas.height;
+    const c=cv.getContext('2d'); c.setTransform(DPR,0,0,DPR,0,0); c.imageSmoothingEnabled=true;
+    for(let y=0;y<H;y++){
+      const inv=projection.invert([cx,(y+.5-transform.y)/k]); if(!inv) continue;
+      const phi=inv[1]; if(!(phi>-90&&phi<90)) continue;
+      const x0=transform.x+projection([-180,phi])[0]*k, x1=transform.x+projection([180,phi])[0]*k, span=x1-x0;
+      const xa=Math.max(0,x0), xb=Math.min(W,x1); if(xb<=xa||span<=0) continue;
+      c.drawImage(img,(xa-x0)/span*iw,(90-phi)/180*ih,(xb-xa)/span*iw,1,xa,y,xb-xa,1);
+    }
+    rl.cv=cv; rl.key=key; rl.T={x:transform.x,y:transform.y,k:transform.k};
+  }
+  if(rl.cv) drawCached(rl,'overlay',.6);
+}
+function drawWater(k){
+  ctx.fillStyle=theme.sea; ctx.fill(lakesPath);
+  ctx.strokeStyle=theme.water; ctx.lineWidth=.6/k; ctx.stroke(lakesPath);
+  ctx.strokeStyle=theme.water; ctx.lineJoin='round'; ctx.lineCap='round';
+  const widths=[1.3,.9,.6], minK=[1,2,4];
+  for(let i=0;i<3;i++) if(k>=minK[i]){ctx.globalAlpha=.9;ctx.lineWidth=widths[i]/k;ctx.stroke(riverPaths[i])}
+  ctx.globalAlpha=1; ctx.lineCap='butt';
+}
+function drawTerrain(placed){
+  const k=transform.k, ts=theme.ts||1;
+  ctx.save(); ctx.globalAlpha=.6;
+  for(const t of terrain){
+    const ke=k*Math.min(1,W/1000); // how big the map really is on this screen
+    if(t.rank>(ke<.8?0:ke<2.2?1:ke<4?2:ke<8?3:9)) continue;
+    const [x,y]=screenAt(t.ll); if(x<-80||y<-20||x>W+80||y>H+20) continue;
+    const size=Math.max(10,Math.min(14,11.5-t.rank*.5+Math.log2(k)))*ts;
+    ctx.font=`italic 400 ${size}px "EB Garamond", Garamond, serif`;
+    if('letterSpacing' in ctx) ctx.letterSpacing=(size*(t.kind==='mtn'?.28:.14)).toFixed(1)+'px';
+    const txt=t.kind==='mtn'?t.name.toUpperCase():t.name, w=ctx.measureText(txt).width, h=size*1.1;
+    const box=[x-w/2-3,y-h/2,x+w/2+3,y+h/2];
+    if(box[0]<2||box[2]>W-2||box[1]<2||box[3]>H-2) continue; // don't cut names off at the edge
+    if(placed.some(b=>!(box[2]<b[0]||box[0]>b[2]||box[3]<b[1]||box[1]>b[3]))) continue;
+    placed.push(box);
+    ctx.lineWidth=2.5; ctx.strokeStyle=theme.halo; ctx.lineJoin='round'; ctx.strokeText(txt,x,y);
+    ctx.fillStyle=theme.label; ctx.fillText(txt,x,y);
+  }
+  ctx.restore(); if('letterSpacing' in ctx) ctx.letterSpacing='0px';
+}
+const screenAt=ll=>{const p=projection(ll);return [transform.x+p[0]*transform.k,transform.y+p[1]*transform.k]};
+
+/* ---------- state labels that fit inside their state ---------- */
+// Pole of inaccessibility (the point deepest inside a polygon), after Mapbox's polylabel.
+function polylabel(rings,precision){
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  for(const [x,y] of rings[0]){if(x<minX)minX=x;if(y<minY)minY=y;if(x>maxX)maxX=x;if(y>maxY)maxY=y}
+  const w=maxX-minX,h=maxY-minY,size=Math.min(w,h);
+  if(!(size>0)) return [minX,minY,0];
+  const dist=(x,y)=>{let inside=false,min=Infinity;
+    for(const r of rings){for(let i=0,n=r.length,j=n-1;i<n;j=i++){const a=r[i],b=r[j];
+      if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])inside=!inside;
+      let px=b[0],py=b[1],dx=a[0]-px,dy=a[1]-py;
+      if(dx||dy){const t=((x-px)*dx+(y-py)*dy)/(dx*dx+dy*dy);if(t>1){px=a[0];py=a[1]}else if(t>0){px+=dx*t;py+=dy*t}}
+      dx=x-px;dy=y-py;const d=dx*dx+dy*dy;if(d<min)min=d}}
+    return (inside?1:-1)*Math.sqrt(min)};
+  const cell=(x,y,hh)=>{const d=dist(x,y);return {x,y,h:hh,d,max:d+hh*Math.SQRT2}};
+  const heap=[];const push=c=>{heap.push(c);let i=heap.length-1;while(i){const p=(i-1)>>1;if(heap[p].max>=heap[i].max)break;[heap[p],heap[i]]=[heap[i],heap[p]];i=p}};
+  const pop=()=>{const top=heap[0],last=heap.pop();if(heap.length){heap[0]=last;let i=0;for(;;){let l=2*i+1,r=l+1,m=i;if(l<heap.length&&heap[l].max>heap[m].max)m=l;if(r<heap.length&&heap[r].max>heap[m].max)m=r;if(m===i)break;[heap[m],heap[i]]=[heap[i],heap[m]];i=m}}return top};
+  let hh=size/2; for(let x=minX;x<maxX;x+=size)for(let y=minY;y<maxY;y+=size)push(cell(x+hh,y+hh,hh));
+  let best=cell(minX+w/2,minY+h/2,0);
+  for(let n=0;heap.length&&n<800;n++){const c=pop();if(c.d>best.d)best=c;if(c.max-best.d<=precision)continue;
+    hh=c.h/2;push(cell(c.x-hh,c.y-hh,hh));push(cell(c.x+hh,c.y-hh,hh));push(cell(c.x-hh,c.y+hh,hh));push(cell(c.x+hh,c.y+hh,hh))}
+  return [best.x,best.y,Math.max(0,best.d)];
+}
+// Biggest part of a state; its label spot is worked out later, only if a label is wanted.
+function biggestPart(g){
+  const gp=d3.geoPath(projection); let best=null,ba=-1;
+  for(const poly of g.coordinates){const a=gp.area({type:'Polygon',coordinates:poly});if(a>ba){ba=a;best=poly}}
+  if(!best) return null;
+  const c=gp.centroid({type:'Polygon',coordinates:best});
+  return isFinite(c[0])?{a:ba,x:c[0],y:c[1],r:0,poly:best}:null;
+}
+// Move the label spot to the point deepest inside the biggest part (in projected, zoom-1 pixels).
+function anchorOf(f){
+  const L=f.lab; if(!L.poly) return L;
+  const thin=r=>{const st=Math.max(1,Math.floor(r.length/300));return r.filter((_,i)=>i%st===0)}; // a light outline is plenty to find the middle
+  const rings=L.poly.map(r=>thin(r).map(p=>projection(p)).filter(p=>p&&isFinite(p[0]))); L.poly=null;
+  if(!rings[0]||rings[0].length<3) return L;
+  let span=0;for(const p of rings[0])span=Math.max(span,Math.abs(p[0]-rings[0][0][0]));
+  if(span>W*.6) return L; // wraps round the date line: keep the centroid
+  const [x,y,r]=polylabel(rings,Math.max(.05,Math.sqrt(L.a)/60));
+  L.x=x;L.y=y;L.r=r; return L;
+}
+// A light projected outline of a state for quick point tests (full outlines are slow to test).
+function hitShape(f){
+  if(f.hr) return f.hr;
+  const g=geomOf(f),rings=[];
+  for(const poly of g.coordinates) for(const r of poly){
+    const st=Math.max(1,Math.floor(r.length/400)),pts=[];
+    let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+    for(let i=0;i<r.length;i+=st){const p=projection(r[i]);if(p&&isFinite(p[0])){pts.push(p);if(p[0]<x0)x0=p[0];if(p[0]>x1)x1=p[0];if(p[1]<y0)y0=p[1];if(p[1]>y1)y1=p[1]}}
+    if(pts.length>2) rings.push({pts,x0,y0,x1,y1});
+  }
+  return f.hr={rings,bb:f.bb};
+}
+function inShape(f,x,y){
+  const h=hitShape(f),bb=h.bb;
+  if(!bb||x<bb[0][0]||x>bb[1][0]||y<bb[0][1]||y>bb[1][1]) return false;
+  let inside=false;
+  for(const R of h.rings){
+    if(x<R.x0||x>R.x1||y<R.y0||y>R.y1) continue; // a point outside a ring's box can't be inside it
+    const r=R.pts;
+    for(let i=0,j=r.length-1;i<r.length;j=i++){
+      const a=r[i],b=r[j]; if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]) inside=!inside;
+    }
+  }
+  return inside;
+}
+// Does a label box (screen px, centred on cx,cy) sit inside f, and not under a state drawn on top of it?
+function labelFits(f,cx,cy,w,h,over){
+  const k=transform.k,pts=[];
+  for(let i=0;i<=6;i++){const x=cx-w/2+w*i/6;pts.push([x,cy-h/2],[x,cy+h/2])}
+  pts.push([cx-w/2,cy],[cx+w/2,cy],[cx,cy]);
+  // quick no: wider or taller than the whole state
+  const bb=f.bb; if(w/k>bb[1][0]-bb[0][0]||h/k>bb[1][1]-bb[0][1]) return false;
+  for(const [sx,sy] of [[cx,cy],...pts]){
+    const px=(sx-transform.x)/k,py=(sy-transform.y)/k;
+    if(!inShape(f,px,py)) return false;
+    if(over.some(o=>inShape(o,px,py))) return false;
+  }
+  return true;
+}
+// Split a name into n lines, keeping the longest line as short as possible.
+function splitName(txt,n){
+  const words=txt.split(' '); if(words.length<n) return null;
+  let best=null,bl=Infinity;
+  const go=(i,lines)=>{
+    if(lines.length===n-1){const l=[...lines,words.slice(i).join(' ')],m=Math.max(...l.map(x=>x.length));if(m<bl){bl=m;best=l}return}
+    for(let j=i+1;j<=words.length-(n-1-lines.length);j++) go(j,[...lines,words.slice(i,j).join(' ')]);
+  };
+  go(0,[]); return best;
+}
+const spacingFor=size=>size*(size>=12?.16:size>=10?.1:.05);
+// Largest font size (and one or two lines) that keeps the whole name inside the state.
+function fitLabel(f,txt,cx,cy,maxSize,over){
+  const ts=theme.ts||1, minSize=8;
+  const tryLines=lines=>{
+    for(let size=maxSize;size>=minSize;size=size>minSize&&size*.82<minSize?minSize:size*.82){
+      ctx.font=`500 ${size}px "EB Garamond", Garamond, serif`;
+      if('letterSpacing' in ctx) ctx.letterSpacing=spacingFor(size).toFixed(1)+'px';
+      const w=Math.max(...lines.map(l=>ctx.measureText(l).width))+4,lh=size*1.05,h=lh*lines.length;
+      if(labelFits(f,cx,cy,w,h,over)) return {lines,size,w,h,lh};
+      if(size===minSize) break;
+    }
+    return null;
+  };
+  for(const lines of [[txt],splitName(txt,2),splitName(txt,3)]){if(!lines)continue;const r=tryLines(lines);if(r)return r}
+  return null;
+}
+function drawStateLabels(nameOf,taken){
+  const k=transform.k,ts=theme.ts||1;
+  ctx.setTransform(DPR,0,0,DPR,0,0); ctx.textAlign='center'; ctx.textBaseline='middle';
+  const placed=[...(taken||[]),...uiBoxes()],seen=new Set(),cand=[];
+  const order=new Map(active.map((f,i)=>[f,i]));
+  for(const f of active){
+    if(!f.lab||seen.has(f.n)) continue; seen.add(f.n);
+    const sa=f.lab.a*k*k; if(sa<700) continue;
+    const bb=f.bb; if(transform.x+bb[1][0]*k<0||transform.x+bb[0][0]*k>W||transform.y+bb[1][1]*k<0||transform.y+bb[0][1]*k>H) continue;
+    cand.push({f,sa});
+  }
+  cand.sort((a,b)=>b.sa-a.sa);
+  const bucket=Math.round(Math.log(k)/Math.log(1.12))+'|'+ts;
+  let budget=performance.now()+40; // keep frames quick: fits are cached per zoom step
+  for(const c of cand){
+    const f=c.f,txt=nameOf(f).toUpperCase();
+    if(f.lab.poly){if(performance.now()>budget){redrawSoon();continue}anchorOf(f)}
+    c.x=transform.x+f.lab.x*k; c.y=transform.y+f.lab.y*k;
+    let fit=f.fit&&f.fit.key===bucket+txt?f.fit.v:undefined;
+    if(fit===undefined){
+      if(performance.now()>budget){redrawSoon();continue}
+      const i=order.get(f),bb=f.bb;
+      const over=active.slice(i+1).filter(o=>o.n!==f.n&&o.bb&&!(o.bb[1][0]<bb[0][0]||o.bb[0][0]>bb[1][0]||o.bb[1][1]<bb[0][1]||o.bb[0][1]>bb[1][1]));
+      const maxSize=Math.max(9,Math.min(22,Math.sqrt(c.sa)/9))*(1+(ts-1)*.6);
+      // try the deepest point first, then a few spots around it (a smaller state may sit on top)
+      const r=Math.max(6,(f.lab.r||0)*k*.6);
+      for(const [ox,oy] of [[0,0],[r,0],[-r,0],[0,r],[0,-r]]){
+        fit=fitLabel(f,txt,c.x+ox,c.y+oy,maxSize,over);
+        if(fit){fit.dx=ox;fit.dy=oy;break}
+      }
+      f.fit={key:bucket+txt,v:fit};
+    }
+    if(fit){
+      const fx=c.x+fit.dx,fy=c.y+fit.dy;
+      if(fx-fit.w/2<4||fx+fit.w/2>W-4||fy-fit.h/2<4||fy+fit.h/2>H-4){
+        if(performance.now()>budget){redrawSoon();continue}
+        const nx=Math.min(Math.max(fx,fit.w/2+4),W-fit.w/2-4),ny=Math.min(Math.max(fy,fit.h/2+4),H-fit.h/2-4);
+        const i=order.get(f),bb=f.bb;
+        const over=active.slice(i+1).filter(o=>o.n!==f.n&&o.bb&&!(o.bb[1][0]<bb[0][0]||o.bb[0][0]>bb[1][0]||o.bb[1][1]<bb[0][1]||o.bb[0][1]>bb[1][1]));
+        const f2=fitLabel(f,txt,nx,ny,fit.size,over);
+        if(!f2) continue;
+        fit={...f2,dx:nx-c.x,dy:ny-c.y};
+      }
+    }
+    if(!fit) continue;
+    const cx=c.x+fit.dx,cy=c.y+fit.dy;
+    const box=[cx-fit.w/2,cy-fit.h/2,cx+fit.w/2,cy+fit.h/2];
+    if(placed.some(b=>!(box[2]<b[0]||box[0]>b[2]||box[3]<b[1]||box[1]>b[3]))) continue;
+    placed.push(box);
+    ctx.font=`500 ${fit.size}px "EB Garamond", Garamond, serif`;
+    if('letterSpacing' in ctx) ctx.letterSpacing=spacingFor(fit.size).toFixed(1)+'px';
+    fit.lines.forEach((l,i)=>{const ly=cy-fit.h/2+fit.lh*(i+.5);
+      ctx.lineWidth=3; ctx.strokeStyle=theme.halo; ctx.lineJoin='round'; ctx.strokeText(l,cx,ly);
+      ctx.fillStyle=theme.label; ctx.fillText(l,cx,ly)});
+  }
+  if('letterSpacing' in ctx) ctx.letterSpacing='0px';
+  return placed;
+}
+// screen areas covered by the year plate and buttons, so labels avoid them
+function uiBoxes(){
+  const cr=canvas.getBoundingClientRect(),out=[];
+  for(const el of document.querySelectorAll('#plate,#controls,#insight,#clue')){
+    const r=el.getBoundingClientRect(); if(!r.width||!r.height) continue;
+    out.push([r.left-cr.left-4,r.top-cr.top-4,r.right-cr.left+4,r.bottom-cr.top+4]);
+  }
+  return out;
+}
+function refitNear(before){
+  const now=new Set(active),changed=[...active.filter(f=>!before.has(f)),...[...before].filter(f=>!now.has(f))].filter(f=>f.bb);
+  if(!changed.length) return;
+  const hit=(a,b)=>!(a[1][0]<b[0][0]||a[0][0]>b[1][0]||a[1][1]<b[0][1]||a[0][1]>b[1][1]);
+  for(const f of active) if(f.fit&&f.bb&&changed.some(g=>g!==f&&hit(f.bb,g.bb))) f.fit=null;
+}
+// Engraved waterlines along the coast. Wide soft strokes are slow, so they are drawn once into
+// an image and reused until the map moves; while it is moving they are left out.
+const wl={key:'',cv:null,pending:'',since:0,t:0,T:null};
+function drawWaterlines(k){
+  const key=viewKey()+'|'+theme.water+'|'+theme.sea;
+  if(settled(wl,key)===false){
+    const cv=wl.cv||document.createElement('canvas'); cv.width=canvas.width; cv.height=canvas.height;
+    const c=cv.getContext('2d'); c.setTransform(DPR*k,0,0,DPR*k,DPR*transform.x,DPR*transform.y);
+    c.save(); c.clip(spherePath); c.lineJoin='round';
+    const sc=Math.min(1,W/1100)*Math.min(1.6,Math.sqrt(k));
+    for(const [w,a] of [[11,.18],[8,.24],[5.5,.32],[3.2,.45]]){
+      c.globalAlpha=a; c.strokeStyle=theme.water; c.lineWidth=w*sc/k; c.stroke(coastPath);
+      c.globalAlpha=1; c.strokeStyle=theme.sea; c.lineWidth=Math.max(.2,(w-1.1)*sc)/k; c.stroke(coastPath);
+    }
+    c.restore(); wl.cv=cv; wl.key=key; wl.T={x:transform.x,y:transform.y,k:transform.k};
+  }
+  if(wl.cv) drawCached(wl,'source-over',1);
+}
+let soonT=0; function redrawSoon(){if(!soonT)soonT=setTimeout(()=>{soonT=0;(typeof redraw==='function'?redraw:draw)()},30)}
 function fixWinding(geom){
   geom.coordinates.forEach(poly=>{if(d3.geoArea({type:'Polygon',coordinates:poly})>2*Math.PI) poly.forEach(r=>r.reverse())});
   return geom;
@@ -565,7 +922,7 @@ function loadData(){
   span=names.map(()=>[Infinity,-Infinity]); const cy=new Set();
   feats=P.f.map(([n,a,b,polys])=>{span[n][0]=Math.min(span[n][0],a);span[n][1]=Math.max(span[n][1],b);cy.add(a);cy.add(b+1);return {n,a,b,polys,geom:null,path:null,area:0,lab:null}});
   changeYears=[...cy].filter(y=>y>=YMIN&&y<=YMAX).sort((x,y)=>x-y);
-  land=fixWinding({type:'MultiPolygon',coordinates:L.map(p=>decode(p,Q))});
+  loadLayers(L); loadEvents(); loadAliases(P.alias);
   grat=d3.geoGraticule10();
 }
 function geomOf(f){if(!f.geom){f.geom=fixWinding({type:'MultiPolygon',coordinates:polysOf(f.polys)});f.polys=null}return f.geom}
@@ -573,9 +930,7 @@ function pathOf(f){
   if(!f.path){
     const g=geomOf(f),p=new Path2D(); d3.geoPath(projection,p)(g); f.path=p;
     const gp=d3.geoPath(projection); f.area=gp.area(g);
-    let best=null,ba=-1;
-    for(const poly of g.coordinates){const part={type:'Polygon',coordinates:poly};const a=gp.area(part);if(a>ba){ba=a;best=part}}
-    const c=best?gp.centroid(best):[NaN,NaN]; f.lab=isFinite(c[0])?{x:c[0],y:c[1],a:ba}:null;
+    f.bb=gp.bounds(g); f.lab=biggestPart(g); f.fit=null;
   }
   return f.path;
 }
@@ -583,6 +938,7 @@ function buildBase(){
   landPath=new Path2D(); d3.geoPath(projection,landPath)(land);
   spherePath=new Path2D(); d3.geoPath(projection,spherePath)(sphere);
   gratPath=new Path2D(); d3.geoPath(projection,gratPath)(grat);
+  buildLayers();
 }
 // While the map moves, skip the costly waterlines; draw them again once it settles.
 let moving=false,moveT=0;
@@ -594,7 +950,7 @@ function resize(){
   const r=canvas.getBoundingClientRect(); W=r.width; H=r.height; DPR=Math.min(window.devicePixelRatio||1,2);
   canvas.width=Math.round(W*DPR); canvas.height=Math.round(H*DPR);
   projection=d3.geoNaturalEarth1().fitExtent([[12,12],[W-12,H-12]],sphere);
-  feats.forEach(f=>{f.path=null;f.lab=null});
+  feats.forEach(f=>{f.path=null;f.lab=null;f.hr=null;f.fit=null});
   buildBase(); zoom.translateExtent([[-W*0.5,-H*0.5],[W*1.5,H*1.5]]);
   if(first){
     first=false;
@@ -607,7 +963,7 @@ function resize(){
   }
   setActive(); draw();
 }
-function setActive(){active=feats.filter(f=>f.a<=year&&year<=f.b);active.forEach(pathOf);active.sort((x,y)=>y.area-x.area)}
+function setActive(){const before=new Set(active);active=feats.filter(f=>f.a<=year&&year<=f.b);active.forEach(pathOf);active.sort((x,y)=>y.area-x.area);refitNear(before)}
 
 function draw(){
   if(!landPath) return;
@@ -617,15 +973,12 @@ function draw(){
   ctx.fillStyle=theme.sea; ctx.fill(spherePath);
   ctx.save(); ctx.clip(spherePath);
   ctx.strokeStyle=theme.water; ctx.globalAlpha=.35; ctx.lineWidth=.5/k; ctx.stroke(gratPath); ctx.globalAlpha=1;
-  const sc=Math.min(1,W/1100)*Math.min(1.6,Math.sqrt(k));
-  for(const [w,a] of (moving||animating)?[]:[[11,.18],[8,.24],[5.5,.32],[3.2,.45]]){
-    ctx.globalAlpha=a; ctx.strokeStyle=theme.water; ctx.lineWidth=w*sc/k; ctx.stroke(landPath);
-    ctx.globalAlpha=1; ctx.strokeStyle=theme.sea; ctx.lineWidth=Math.max(.2,(w-1.1)*sc)/k; ctx.stroke(landPath);
-  }
   ctx.restore();
+  drawWaterlines(k);
   ctx.fillStyle=theme.land; ctx.fill(landPath);
   ctx.save(); ctx.clip(landPath);
   for(const f of active){ctx.fillStyle=theme.pal[colorIdx[f.n]%8];ctx.globalAlpha=.92;ctx.fill(f.path,'nonzero')}
+  ctx.globalAlpha=1; drawRelief(); drawWater(k);
   ctx.globalAlpha=1; ctx.strokeStyle=theme.border; ctx.lineWidth=.6/k; ctx.lineJoin='round';
   for(const f of active) ctx.stroke(f.path);
   if(selectedState>=0){ctx.strokeStyle=theme.accent;ctx.lineWidth=2/k;for(const f of active) if(f.n===selectedState) ctx.stroke(f.path)}
@@ -633,7 +986,7 @@ function draw(){
   ctx.strokeStyle=theme.border; ctx.globalAlpha=.7; ctx.lineWidth=.55/k; ctx.stroke(landPath); ctx.globalAlpha=1;
   ctx.strokeStyle=theme.water; ctx.lineWidth=1/k; ctx.stroke(spherePath);
   drawOverlay(k);
-  if(!(activity&&activity.hideLabels)) drawLabels();
+  if(!(activity&&activity.hideLabels)) drawLabels(); else eventBoxes=[];
   placePins();
 }
 function drawOverlay(k){
@@ -653,31 +1006,12 @@ function drawOverlay(k){
   if(overlay.answer) mark(overlay.answer,theme.ok,9);
 }
 function drawLabels(){
-  const k=transform.k;
-  ctx.setTransform(DPR,0,0,DPR,0,0); ctx.textAlign='center'; ctx.textBaseline='middle';
-  const placed=[],seen=new Set(),cand=[];
-  for(const f of active){
-    if(!f.lab||seen.has(f.n)) continue; seen.add(f.n);
-    const sa=f.lab.a*k*k; if(sa<900) continue;
-    const x=transform.x+f.lab.x*k,y=transform.y+f.lab.y*k;
-    if(x<-50||y<-20||x>W+50||y>H+20) continue;
-    cand.push({f,x,y,sa});
-  }
-  cand.sort((a,b)=>b.sa-a.sa);
-  for(const c of cand){
-    const size=Math.max(9,Math.min(22,Math.sqrt(c.sa)/9))*(1+(theme.ts-1)*.6), txt=names[c.f.n].toUpperCase();
-    ctx.font=`500 ${size}px "EB Garamond", Garamond, serif`;
-    if('letterSpacing' in ctx) ctx.letterSpacing=(size*.18).toFixed(1)+'px';
-    const w=ctx.measureText(txt).width,h=size*1.1;
-    if(w>Math.sqrt(c.sa)*3.4) continue;
-    const box=[c.x-w/2-2,c.y-h/2,c.x+w/2+2,c.y+h/2];
-    if(placed.some(b=>!(box[2]<b[0]||box[0]>b[2]||box[3]<b[1]||box[1]>b[3]))) continue;
-    placed.push(box);
-    ctx.lineWidth=3; ctx.strokeStyle=theme.halo; ctx.lineJoin='round'; ctx.strokeText(txt,c.x,c.y);
-    ctx.fillStyle=theme.label; ctx.fillText(txt,c.x,c.y);
-  }
-  if('letterSpacing' in ctx) ctx.letterSpacing='0px';
+  const placed=drawStateLabels(f=>labelName(f));
+  const ev=eventsOn()?placeEvents(placed):[];
+  for(const p of ev) placed.push(p.box);
+  drawTerrain(placed); drawEvents(ev);
 }
+const eventsOn=()=>!activity&&store.settings.events!=='off';
 let raf=0; const redraw=()=>{if(!raf)raf=requestAnimationFrame(()=>{raf=0;draw()})};
 const screenOf=ll=>{const p=projection(ll);return [transform.x+p[0]*transform.k,transform.y+p[1]*transform.k]};
 function lonlatAt(e){const r=canvas.getBoundingClientRect();const p=transform.invert([e.clientX-r.left,e.clientY-r.top]);return projection.invert(p)}
@@ -705,7 +1039,7 @@ function nearState(e,name,tol){
   ctx.restore(); return hit;
 }
 function flyToState(name,besidePanel=true){
-  const f=active.filter(f=>names[f.n]===name).sort((a,b)=>b.area-a.area)[0]; if(!f||!f.lab) return;
+  const f=active.filter(f=>names[f.n]===name).sort((a,b)=>b.area-a.area)[0]; if(!f||!f.lab) return; anchorOf(f);
   // zoom in until even a small state covers a visible patch of the screen
   const k=Math.min(12,Math.max(transform.k,Math.sqrt(4000/Math.max(f.lab.a,1))));
   flyTo(projection.invert([f.lab.x,f.lab.y]),k,besidePanel);
@@ -729,8 +1063,8 @@ function renderPlate(){
   else{const [a,b]=fmtYear(year); elYear.innerHTML=esc(a)+'<small>'+b+'</small>'}
   const n=new Set(active.map(f=>f.n)).size;
   if(hide) elSub.textContent='Guess the year';
-  else if(mode==='adventure'){const cp=CPS[S.cp];const ch=C.chapters.find(c=>c.id===cp.chapter);elSub.textContent=(ch?'Chapter 1 · '+ch.title:'')}
-  else elSub.textContent=n+(n===1?' state':' states')+' on the map';
+  else if(mode==='adventure'){const cp=CPS[S.cp];const ch=C.chapters.find(c=>c.id===cp.chapter);elSub.textContent=(ch?'Chapter '+(C.chapters.indexOf(ch)+1)+' · '+ch.title:'')}
+  else elSub.textContent=n+(n===1?' country':' countries')+' on the map';
   $('insight').hidden=mode!=='adventure'; $('insightN').textContent=S.insight-vegasHeld; renderStreak();
   const sl=store.active&&store.slots[store.active]; $('plate').querySelector('h1').textContent=sl?'Atlas of Time · '+sl.name:'Atlas of Time';
 }
@@ -814,20 +1148,43 @@ function openState(n){
   const F=stateFacts(n), nm=names[n], title=wiki[n]||nm, fresh=stamp(n);
   const hideEnd=mode==='adventure'&&F.end>CPS[S.maxCp].year;
   const age=year-F.start;
-  let h=`<div class="kicker">In ${fmtFull(year)}${fresh?' · new passport stamp':''}</div><h2>${esc(nm)}</h2>
+  let h=`<div class="kicker">In ${fmtFull(year)}${fresh?' · new passport stamp':''}</div><h2>${esc(nameAt(n,year))}</h2>
     <div class="capsule-hero" id="hero"><span class="loading">Looking for pictures…</span></div>
     <ul class="facts">
       <li><span>On the map since</span><b>${fmtFull(F.start)}${age>0?'<br><span class="small">'+yearsText(age)+' by now</span>':''}</b></li>
-      <li><span>Size in ${fmtFull(year)}</span><b>${F.count===1?'The only state on the map':F.rank===1?'Largest state on the map':ordinal(F.rank)+' largest of '+F.count}</b></li>
+      <li><span>Size in ${fmtFull(year)}</span><b>${F.count===1?'The only country on the map':F.rank===1?'Largest country on the map':ordinal(F.rank)+' largest of '+F.count}</b></li>
       <li><span>Lasts until</span><b>${hideEnd?'Unlock more time to find out':fmtFull(F.end)}</b></li>
     </ul>`;
   if(F.others.length) h+=`<p class="small">Other big powers in ${fmtFull(year)}: ${F.others.map(esc).join(', ')}.</p>`;
   h+=`<h3>What was it like?</h3><div id="wtext"><p class="loading">Loading from Wikipedia…</p></div><div class="gallery" id="gal"></div>
     <p class="small">Pictures come from the Wikipedia article. Some show other periods, modern ruins, maps or artists’ reconstructions, so read each caption.</p>
-    <p class="small">Borders from Cliopatria, simplified. Ancient borders are approximate.</p>`;
+    <p class="small">Borders from Cliopatria. Ancient borders are approximate.</p>`;
   openPanel(h); selectedState=n; redraw();
   if(fresh){toast('New passport stamp: '+nm);if(vegasOn())SFX.stamp()}
   loadCapsule(n,title);
+}
+function openEvent(ev){
+  const kind=EV_KIND[ev.kind]||'event';
+  let h=`<div class="kicker">${ev.tier===2?'Major event':'Event'} · ${esc(eventYears(ev))}</div><h2>${esc((EV_ICON[ev.kind]||'◆')+' '+ev.name)}</h2>
+    <p class="muted">${ev.desc?esc(ev.desc[0].toUpperCase()+ev.desc.slice(1)):esc(kind[0].toUpperCase()+kind.slice(1))}</p>
+    <div class="capsule-hero" id="hero"><span class="loading">Looking for a picture…</span></div>
+    <div id="wtext"><p class="loading">Loading from Wikipedia…</p></div>
+    <p class="small">Event list from Wikidata (CC0). The dot marks where it happened, or where it was signed.</p>`;
+  openPanel(h); redraw(); loadEvent(ev);
+}
+async function loadEvent(ev){
+  const tok=++capsuleToken, alive=()=>tok===capsuleToken&&panel.classList.contains('show')&&$('wtext');
+  try{
+    const sum=await wikiFetch('summary',decodeURIComponent(ev.wiki)); if(!alive()) return;
+    const canon=(sum.titles&&sum.titles.canonical)||ev.wiki, page='https://en.wikipedia.org/wiki/'+encodeURIComponent(decodeURIComponent(canon));
+    const img=safeImg((sum.originalimage||sum.thumbnail||{}).source);
+    $('hero').innerHTML=img?`<img src="${esc(img)}" alt="${esc(sum.title||ev.name)}" loading="lazy">`:'<span class="muted">No picture for this one.</span>';
+    $('wtext').innerHTML=(sum.extract?`<p>${esc(sum.extract)}</p>`:'')+`<p class="src">Text from <a href="${esc(page)}" target="_blank" rel="noopener">Wikipedia: ${esc(sum.title||ev.name)}</a>, <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>.</p>`;
+  }catch(err){
+    if(!alive()) return;
+    $('hero').innerHTML='';
+    $('wtext').innerHTML=`<p class="muted">Couldn’t reach Wikipedia. <a href="https://en.wikipedia.org/wiki/${esc(ev.wiki)}" target="_blank" rel="noopener">Read about it on Wikipedia</a>.</p>`;
+  }
 }
 const wikiCache=new Map();
 function wikiFetch(kind,title){
@@ -879,8 +1236,8 @@ $('lightbox').addEventListener('click',e=>{if(e.target.tagName!=='A')$('lightbox
 /* ---------- passport: every state you've looked at ---------- */
 function passportHtml(){
   const st=Object.entries(S.stamps).sort((a,b)=>a[1].y-b[1].y);
-  const h=`<h3>Passport · ${st.length} ${st.length===1?'state':'states'} visited</h3>`;
-  if(!st.length) return h+'<p class="muted">Tap any state on the map to see what it was like and collect its stamp.</p>';
+  const h=`<h3>Passport · ${st.length} ${st.length===1?'country':'countries'} visited</h3>`;
+  if(!st.length) return h+'<p class="muted">Tap any country on the map to see what it was like and collect its stamp.</p>';
   return h+'<div class="stamps">'+st.map(([nm,s])=>`<button class="stamp" data-stamp="${esc(nm)}" title="${esc(nm)}">${s.img?`<img src="${esc(s.img)}" alt="" loading="lazy">`:`<span class="ph">${esc((nm.match(/[A-Za-z]/)||['?'])[0])}</span>`}<span>${esc(nm)}</span><br><span class="muted">${fmtFull(s.y)}</span></button>`).join('')+'</div>';
 }
 function bindPassport(){on('[data-stamp]',e=>{
@@ -891,7 +1248,7 @@ function bindPassport(){on('[data-stamp]',e=>{
 })}
 
 /* ---------- menu: saves and settings ---------- */
-function ago(t){const s=(Date.now()-t)/1000;if(s<60)return 'just now';if(s<3600)return Math.round(s/60)+' min ago';if(s<86400)return Math.round(s/3600)+' hours ago';return new Date(t).toLocaleDateString()}
+function ago(t){const s=(Date.now()-t)/1000;if(s<60)return 'just now';if(s<3600)return Math.round(s/60)+' min ago';if(s<86400){const h=Math.round(s/3600);return h+(h===1?' hour ago':' hours ago')};return new Date(t).toLocaleDateString()}
 const slug=t=>String(t).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'save';
 function slotSummary(sl){
   const s=sl.state, done=C.challenges.filter(c=>{const r=s.res[c.id];return r&&(r.state==='reviewed'||(r.state==='won'&&r.pts>0))}).length;
@@ -966,6 +1323,8 @@ function settingsHtml(){
   const st=store.settings, opt=(key,vals)=>'<div class="opt" role="group">'+vals.map(([v,l])=>`<button data-k="${key}" data-v="${v}" aria-pressed="${st[key]===v}">${l}</button>`).join('')+'</div>';
   return '<h3>Text size</h3>'+opt('ts',[['standard','Standard'],['large','Large'],['xl','Extra large']])+
     '<h3>Colours</h3>'+opt('theme',[['auto','Match device'],['light','Light'],['dark','Dark']])+
+    '<h3>Events on the map</h3>'+opt('events',[['on','Show'],['off','Hide']])+
+    '<p class="small">Battles, treaties, revolutions and other big moments, each with a line to where it happened. Tap one to read about it.</p>'+
     '<h3>Motion</h3>'+opt('motion',[['auto','Match device'],['reduce','Reduce motion']])+
     '<h3>Vegas mode</h3>'+opt('vegas',[['off','Off'],['on','On 🎰']])+
     '<p class="small">Lights, sounds and a bonus spin after every right answer. Wrong answers never cost anything. Reduce motion turns the lights off.</p>'+
@@ -1090,7 +1449,7 @@ function renderClue(fb,bad){
   const offer=a.kind==='new'?`No misses or hints: +${R.perfect} ✦ · with help: +${R.retry} ✦ · “Show me”: nothing`:a.kind==='review'?`Review: find it with no misses or hints for +${R.review} ✦`:'Practice: no Insight this time';
   let h=`<div class="kicker">Map Detective</div><p>${esc(c.clue)}</p><div class="offer">${offer}</div>`;
   if(a.hints) h+='<ul class="hintlist">'+(c.hints||[]).slice(0,a.hints).map(x=>`<li>${esc(x)}</li>`).join('')+(a.hints>=maxH?'<li>The area is marked on the map.</li>':'')+'</ul>';
-  h+=`<div class="fb${bad?' bad':''}" aria-live="polite">${esc(fb||(c.target.kind==='state'?'Tap the state on the map.':'Tap the place on the map. You can drag and zoom first.'))}</div>`;
+  h+=`<div class="fb${bad?' bad':''}" aria-live="polite">${esc(fb||(c.target.kind==='state'?'Tap the country on the map.':'Tap the place on the map. You can drag and zoom first.'))}</div>`;
   if(a.showList){
     const opts=c.target.kind==='state'?[...new Set(active.map(f=>names[f.n]))].sort():c.choices;
     if(!a.order||a.order.length!==opts.length) a.order=shuffle(opts.map((_,i)=>i)); // the right answer isn't always first
@@ -1138,7 +1497,7 @@ function mdTap(e){
     const n=stateAt(e);
     // forgiving: a tap on or near the target counts, since some ancient states are tiny on the map
     if((n>=0&&names[n]===t.name)||nearState(e,t.name,22)) return mdFinish(a.attempts===0&&a.hints===0);
-    if(n<0){a.attempts++;return renderClue('There’s no state there. Try tapping somewhere else.',true)}
+    if(n<0){a.attempts++;return renderClue('There’s no country there. Try tapping somewhere else.',true)}
     a.attempts++; renderClue(`That’s ${names[n]}. Try again.`,true);
   }
 }
@@ -1165,7 +1524,7 @@ function endMD(keepOverlay){
 function openWAIIntro(c){
   const best=S.waiBest[c.id], r=S.res[c.id];
   const offer=`Average 500+ points: +${R.perfect} ✦ · 250+: +${R.retry} ✦ · lower: nothing, but you can play again with new maps.`+(r&&r.pts&&r.pts<R.perfect?` You’ve earned +${r.pts}; reach the next tier for the difference.`:r&&r.pts>=R.perfect?' You’ve already earned the full amount.':'');
-  openPanel(backTo(c)+`<div class="kicker">When Am I?</div><h2>${esc(c.title)}</h2><p>${esc(c.intro)}</p><p class="note">${offer}</p><p class="muted">State names stay on the map as clues.</p>${best!=null?`<p class="muted">Best: ${best} / ${c.rounds*1000}</p>`:''}<div class="row"><button class="btn" id="waiGo">Start</button></div>`);
+  openPanel(backTo(c)+`<div class="kicker">When Am I?</div><h2>${esc(c.title)}</h2><p>${esc(c.intro)}</p><p class="note">${offer}</p><p class="muted">Country names stay on the map as clues.</p>${best!=null?`<p class="muted">Best: ${best} / ${c.rounds*1000}</p>`:''}<div class="row"><button class="btn" id="waiGo">Start</button></div>`);
   bindBack(); $('waiGo').onclick=()=>startWAI({id:c.id,range:c.range,rounds:c.rounds,tolerance:c.tolerance,adventure:true});
 }
 const FREE_WAI=[
@@ -1173,7 +1532,7 @@ const FREE_WAI=[
   {id:'free-1000',title:'Since 1000 CE',range:[1000,YMAX],rounds:5,tolerance:.2},
 ];
 function openFreeWAI(){
-  let h='<div class="kicker">When Am I?</div><h2>Guess the year</h2><p>You’ll see the world map at a secret year. Read the state names and borders, then guess when it is. Five rounds, up to 1,000 points each.</p><div class="chlist">';
+  let h='<div class="kicker">When Am I?</div><h2>Guess the year</h2><p>You’ll see the world map at a secret year. Read the country names and borders, then guess when it is. Five rounds, up to 1,000 points each.</p><div class="chlist">';
   for(const m of FREE_WAI){const b=S.waiBest[m.id];h+=`<button class="ch" data-m="${m.id}"><span>${m.title}</span><span class="cr">${b!=null?'Best '+b:'Play'}</span></button>`}
   openPanel(h+'</div>'); on('[data-m]',e=>{const m=FREE_WAI.find(x=>x.id===e.currentTarget.dataset.m);startWAI(Object.assign({adventure:false},m))});
 }
@@ -1401,7 +1760,7 @@ function resolveSpin(run,box){
 /** Spins earned but not pulled yet wait here. */
 function openSpins(){
   if(activity||!S.spins.length) return;
-  openPanel(`<div class="kicker">Vegas</div><h2>Bonus spins</h2><p class="muted" id="spinsIntro">${S.spins.length===1?'One spin is':S.spins.length+' spins are'} waiting from right answers. Each one can double or ×5 the Insight from the answer that earned it.</p>`);
+  openPanel(`<div class="kicker">Vegas</div><h2>Bonus spins</h2><p class="muted" id="spinsIntro">${S.spins.length===1?'One spin is':S.spins.length+' spins are'} waiting from right answers. Each one can double the Insight from the answer that earned it, or multiply it by 5.</p>`);
   presentMachine(S.spins[0]);
 }
 function renderStreak(){
@@ -1505,6 +1864,8 @@ $('mAdv').onclick=()=>setMode('adventure'); $('mFree').onclick=()=>setMode('free
 canvas.addEventListener('click',e=>{
   if(activity&&activity.type==='md'){mdTap(e);return}
   if(activity) return;
+  const r=canvas.getBoundingClientRect(),ev=eventAt(e.clientX-r.left,e.clientY-r.top);
+  if(ev){openEvent(ev);return}
   const n=stateAt(e); if(n>=0) openState(n); else closePanel();
 });
 document.addEventListener('keydown',e=>{
@@ -1534,7 +1895,7 @@ function beginFromIntro(){
   if(id){store.active=id;hadSave=true;save()}
   $('intro').hidden=true; renderPlate();
 }
-$('introStart').onclick=()=>{beginFromIntro();if(mode!=='adventure')setMode('adventure',{silent:true});else{S.mode='adventure';save()}toast('Tap a glowing pin to start exploring, or tap any state.')};
+$('introStart').onclick=()=>{beginFromIntro();if(mode!=='adventure')setMode('adventure',{silent:true});else{S.mode='adventure';save()}toast('Tap a glowing pin to start exploring, or tap any country.')};
 $('introFree').onclick=()=>{beginFromIntro();setMode('free')};
 $('introName').addEventListener('keydown',e=>{if(e.key==='Enter')$('introStart').click()});
 
