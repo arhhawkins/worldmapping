@@ -6,10 +6,11 @@ A second take on Sam's prototype in the repo root. It works the same way: Cliopa
 
 ## How it differs from Sam's version
 
-- **One self-contained file.** The border data, coastlines, relief, events and d3 are all inside `index.html` (about 8.5 MB). Sam's version loads `data.json` with `fetch`, so it needs a server.
+- **One self-contained file.** The border data, coastlines, relief, events and d3 are all inside `index.html` (about 9.3 MB). Sam's version loads `data.json` with `fetch`, so it needs a server.
 - **Full-detail, smooth borders.** Cliopatria's shapes share one mesh, so the build stores each border line once (like TopoJSON) at full source detail on a 0.01° grid, and the page smooths each line once. Neighbours draw the very same curve, so no slivers or gaps open between them, even fully zoomed in. Cliopatria's "(Name)" composite rows, which repeat other rows, are left out.
 - **2026.** The border data stops at 2024; its last borders carry on to 2026.
-- **Land detail:** Natural Earth 10m coastlines, lakes (the Great Lakes are water now), rivers that appear as you zoom in, grey shaded relief blended into the country colours so mountains and valleys show, and names of mountain ranges, deserts, plateaus and plains.
+- **Satellite terrain:** the land shows NASA's Blue Marble satellite imagery with shaded relief (public domain), streamed as tiles from NASA GIBS, so it stays sharp down to about 500 m a pixel. Country colours sit on top as a see-through tint. It needs an internet connection; offline, the map falls back to grey shaded relief. In the game, ☰ › Settings › Map style switches between Satellite and Classic atlas. (Google Maps imagery isn't used: its terms don't allow putting its tiles on another map.)
+- **Land detail:** Natural Earth 10m coastlines and lakes, kept fine (about 0.5 km) so shores stay smooth fully zoomed in. The Great Lakes are water now. Rivers appear as you zoom in, and mountain ranges, deserts, plateaus and plains are named.
 - **Names that fit.** Each country's name sits at the point deepest inside it, at the largest size that fits inside its borders, on up to three lines. Names that can't fit wait until you zoom in.
 - **Fact-checked names.** `name-fixes.json` holds 89 sourced corrections where Cliopatria kept a name too long or put it on the wrong shape (for example, the Kingdom of Great Britain becomes the United Kingdom of Great Britain and Ireland in 1801). Countries still on today's map use their common short name ("Russia", not "Russian Federation").
 - **Events.** About 1,000 major and medium events (battles, wars, treaties, revolutions, disasters, expeditions) from Wikidata, each drawn as a dot with a line to its name. Tap one for its story. Older events stay up a little longer, since the slider moves in bigger steps further back. `tools/fetch_events.py` makes `events.json`.
@@ -89,4 +90,4 @@ python3 tools/build_andrew_prototype.py --fast
 
 ## Credits
 
-Borders: [Cliopatria](https://github.com/Seshat-Global-History-Databank/cliopatria), Seshat Global History Databank, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Coastlines, lakes, rivers, relief and terrain names: [Natural Earth](https://www.naturalearthdata.com), public domain. Events: [Wikidata](https://www.wikidata.org), CC0; event and country text in panels from Wikipedia, CC BY-SA 4.0. [d3](https://d3js.org), ISC licence.
+Borders: [Cliopatria](https://github.com/Seshat-Global-History-Databank/cliopatria), Seshat Global History Databank, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Coastlines, lakes, rivers, relief and terrain names: [Natural Earth](https://www.naturalearthdata.com), public domain. Satellite imagery: NASA Blue Marble via [NASA GIBS](https://www.earthdata.nasa.gov/gibs), public domain. Events: [Wikidata](https://www.wikidata.org), CC0; event and country text in panels from Wikipedia, CC BY-SA 4.0. [d3](https://d3js.org), ISC licence.

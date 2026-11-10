@@ -5,9 +5,9 @@ Needs (all go in raw/, which is gitignored):
   raw/cliopatria/cliopatria_polities_only_v021.geojson
       git clone --depth 1 https://github.com/Seshat-Global-History-Databank/cliopatria.git raw/cliopatria
       cd raw/cliopatria && unzip cliopatria.geojson.zip
-  raw/ne_10m_land.geojson, raw/ne_50m_lakes.geojson, raw/ne_50m_rivers_lake_centerlines.geojson,
+  raw/ne_10m_land.geojson, raw/ne_10m_lakes.geojson, raw/ne_50m_rivers_lake_centerlines.geojson,
   raw/ne_50m_geography_regions_polys.geojson   (Natural Earth, public domain)
-      for f in ne_10m_land ne_50m_lakes ne_50m_rivers_lake_centerlines ne_50m_geography_regions_polys; do
+      for f in ne_10m_land ne_10m_lakes ne_50m_rivers_lake_centerlines ne_50m_geography_regions_polys; do
         curl -o raw/$f.geojson https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/$f.geojson; done
   raw/relief/GRAY_50M_SR.tif   (Natural Earth grey shaded relief)
       curl -o raw/relief/GRAY_50M_SR.zip https://naciscdn.org/naturalearth/50m/raster/GRAY_50M_SR.zip
@@ -39,7 +39,7 @@ from shapely.strtree import STRtree
 ROOT = Path(__file__).resolve().parent.parent
 CLIO = ROOT / "raw/cliopatria/cliopatria_polities_only_v021.geojson"
 LAND = ROOT / "raw/ne_10m_land.geojson"
-LAKES = ROOT / "raw/ne_50m_lakes.geojson"
+LAKES = ROOT / "raw/ne_10m_lakes.geojson"
 RIVERS = ROOT / "raw/ne_50m_rivers_lake_centerlines.geojson"
 REGIONS = ROOT / "raw/ne_50m_geography_regions_polys.geojson"
 RELIEF = ROOT / "raw/relief/GRAY_50M_SR.tif"
@@ -56,7 +56,9 @@ MAX_BYTES = 10_000_000
 
 Q = 20             # coastline grid: degrees x 20, so 0.05 degree steps
 AQ = 100           # border grid: degrees x 100, so 0.01 degree steps (about 1 km)
-LQ = 50            # coastline, lake and river grid: 0.02 degree steps
+# Grids (steps per degree) for the land layers: fine for coasts and lakes so they stay smooth
+# fully zoomed in, coarser for rivers and the light waterline outline.
+LAND_Q = {"land": 200, "lakes": 100, "rivers": 50, "coast": 50}
 COLOURS = 8        # size of the atlas palette
 DATA_END, SHOW_UNTIL = 2024, 2026   # Cliopatria stops at 2024; its last borders carry on to 2026
 # Natural Earth region kinds shown as terrain names, and the label style key for each
@@ -252,15 +254,18 @@ def build_polities():
     }
 
 
-def polygon_list(path, tol, keep=lambda props: True):
+def polygon_list(path, tol, q, min_area=0):
     polys = []
     for f in json.load(open(path))["features"]:
-        if not keep(f["properties"]):
+        g = shape(f["geometry"])
+        if min_area and g.area < min_area:
             continue
-        g = shape(f["geometry"]).simplify(tol)
+        g = g.simplify(tol)
         parts = g.geoms if g.geom_type == "MultiPolygon" else [g]
         for p in parts:
-            rings = [encode(list(p.exterior.coords), LQ)] + [encode(list(r.coords), LQ) for r in p.interiors]
+            if min_area and p.area < min_area:
+                continue
+            rings = [encode(list(p.exterior.coords), q)] + [encode(list(r.coords), q) for r in p.interiors]
             rings = [r for r in rings if len(r) >= 8]
             if rings:
                 polys.append(rings)
@@ -268,12 +273,12 @@ def polygon_list(path, tol, keep=lambda props: True):
 
 
 def build_land():
-    """Coastlines (10m), lakes, rivers and terrain names, all on the LQ grid."""
+    """Coastlines and lakes (10m), rivers and terrain names, each layer on its own LAND_Q grid."""
     rivers = []
     for f in json.load(open(RIVERS))["features"]:
         g = shape(f["geometry"]).simplify(0.02)
         for line in (g.geoms if g.geom_type == "MultiLineString" else [g]):
-            enc = encode(list(line.coords), LQ)
+            enc = encode(list(line.coords), LAND_Q["rivers"])
             if len(enc) >= 4:
                 rivers.append([f["properties"]["scalerank"], enc])
     terrain = []
@@ -288,10 +293,11 @@ def build_land():
         terrain.append([p["name"], kind, p["scalerank"], round(pt.x, 2), round(pt.y, 2),
                         round(b[2] - b[0], 1)])   # width in degrees, used to size the label
     return {
-        "q": LQ,
-        "land": polygon_list(LAND, 0.02),
-        "coast": polygon_list(LAND, 0.12),     # light outline for the wide, soft waterline strokes
-        "lakes": polygon_list(LAKES, 0.01),
+        "q": LAND_Q,
+        "land": polygon_list(LAND, 0.005, LAND_Q["land"]),
+        # light outline for the wide, soft waterline strokes when zoomed out
+        "coast": polygon_list(LAND, 0.15, LAND_Q["coast"], min_area=0.02),
+        "lakes": polygon_list(LAKES, 0.008, LAND_Q["lakes"], min_area=0.002),
         "rivers": rivers,
         "terrain": terrain,
     }

@@ -332,7 +332,7 @@ html[data-motion="reduce"] #vbanner.show{animation:none;opacity:1}
     </div>
     <div id="toast" hidden role="status"></div>
     <input type="file" id="importFile" accept=".json,application/json" hidden>
-    <div id="credit">Borders: Cliopatria (Seshat), CC BY 4.0. Land and relief: Natural Earth. Events: Wikidata.</div>
+    <div id="credit">Borders: Cliopatria (Seshat), CC BY 4.0. Land: Natural Earth. Satellite: NASA Blue Marble. Events: Wikidata.</div>
     <div id="intro" hidden>
       <div class="card" role="dialog" aria-labelledby="introT">
         <h2 id="introT">Atlas of Time</h2>
@@ -406,7 +406,7 @@ const TYPE={'two-truths-lie':'Two Truths & a Lie','map-detective':'Map Detective
 /* ---------- saves: several named adventures, plus download / load from a file ---------- */
 const STORE_KEY='worldmapping.atlasOfTime.saves.v2', OLD_KEY='worldmapping.atlasOfTime.v1', MAX_SLOTS=6, SAVE_FORMAT=2;
 const newState=()=>({v:2,cp:0,maxCp:0,insight:0,res:{},seen:{},mode:'adventure',waiBest:{},stamps:{},ticks:0,spins:[]});
-const store={active:null,slots:{},settings:{ts:'standard',theme:'auto',motion:'auto',vegas:'off',sound:'on',volume:'medium',events:'on'}};
+const store={active:null,slots:{},settings:{ts:'standard',theme:'auto',motion:'auto',vegas:'off',sound:'on',volume:'medium',events:'on',mapstyle:'satellite'}};
 let S=newState(), hadSave=false, saveNote='', storageOK=true;
 const isObj=o=>!!o&&typeof o==='object'&&!Array.isArray(o);
 const newId=()=>'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -438,7 +438,7 @@ function loadStore(){
   if(raw){
     try{
       const st=JSON.parse(raw); let skipped=0;
-      if(isObj(st.settings)) for(const k of ['ts','theme','motion','vegas','sound','volume','events']) if(typeof st.settings[k]==='string') store.settings[k]=st.settings[k];
+      if(isObj(st.settings)) for(const k of ['ts','theme','motion','vegas','sound','volume','events','mapstyle']) if(typeof st.settings[k]==='string') store.settings[k]=st.settings[k];
       if(isObj(st.slots)) for(const [id,sl] of Object.entries(st.slots)){
         const s=isObj(sl)&&cleanState(sl.state);
         if(s&&typeof sl.name==='string') store.slots[id]={name:sl.name.slice(0,40)||'Adventure',created:+sl.created||Date.now(),updated:+sl.updated||Date.now(),state:s};
@@ -627,14 +627,14 @@ function eventAt(cx,cy){
 }
 
 /* ---------- land detail: relief, lakes, rivers, terrain names ---------- */
-let lakes=null,coast=null,rivers=[],terrain=[],LQ=50,lakesPath=null,coastPath=null,riverPaths=[],reliefImg=null;
+let lakes=null,coast=null,rivers=[],terrain=[],lakesPath=null,coastPath=null,riverPaths=[],reliefImg=null;
 function decodeLine(r,q){const out=[];let x=0,y=0;for(let i=0;i<r.length;i+=2){x+=r[i];y+=r[i+1];out.push([x/q,y/q])}return out}
 function loadLayers(L){
-  LQ=L.q;
-  land=fixWinding({type:'MultiPolygon',coordinates:L.land.map(p=>decode(p,LQ))});
-  lakes=fixWinding({type:'MultiPolygon',coordinates:L.lakes.map(p=>decode(p,LQ))});
-  coast=fixWinding({type:'MultiPolygon',coordinates:L.coast.map(p=>decode(p,LQ))});
-  rivers=L.rivers.map(([r,l])=>({r,g:{type:'LineString',coordinates:decodeLine(l,LQ)}}));
+  const q=n=>typeof L.q==='object'?L.q[n]:L.q; // each layer has its own grid
+  land=fixWinding({type:'MultiPolygon',coordinates:L.land.map(p=>decode(p,q('land')))});
+  lakes=fixWinding({type:'MultiPolygon',coordinates:L.lakes.map(p=>decode(p,q('lakes')))});
+  coast=fixWinding({type:'MultiPolygon',coordinates:L.coast.map(p=>decode(p,q('coast')))});
+  rivers=L.rivers.map(([r,l])=>({r,g:{type:'LineString',coordinates:decodeLine(l,q('rivers'))}}));
   terrain=L.terrain.map(([name,kind,rank,lon,lat,wd])=>({name,kind,rank,ll:[lon,lat],wd}));
   const src=(document.getElementById('relief')||{}).textContent||'';
   if(src.startsWith('data:image')){reliefImg=new Image();reliefImg.onload=()=>{if(typeof redraw==='function')redraw();else draw()};reliefImg.src=src.trim()}
@@ -903,13 +903,76 @@ function drawWaterlines(k){
     const c=cv.getContext('2d'); c.setTransform(DPR*k,0,0,DPR*k,DPR*transform.x,DPR*transform.y);
     c.save(); c.clip(spherePath); c.lineJoin='round';
     const sc=Math.min(1,W/1100)*Math.min(1.6,Math.sqrt(k));
+    const outline=k>=2.5?landPath:coastPath; // zoomed in, the light outline would show its corners
     for(const [w,a] of [[11,.18],[8,.24],[5.5,.32],[3.2,.45]]){
-      c.globalAlpha=a; c.strokeStyle=theme.water; c.lineWidth=w*sc/k; c.stroke(coastPath);
-      c.globalAlpha=1; c.strokeStyle=theme.sea; c.lineWidth=Math.max(.2,(w-1.1)*sc)/k; c.stroke(coastPath);
+      c.globalAlpha=a; c.strokeStyle=theme.water; c.lineWidth=w*sc/k; c.stroke(outline);
+      c.globalAlpha=1; c.strokeStyle=theme.sea; c.lineWidth=Math.max(.2,(w-1.1)*sc)/k; c.stroke(outline);
     }
     c.restore(); wl.cv=cv; wl.key=key; wl.T={x:transform.x,y:transform.y,k:transform.k};
   }
   if(wl.cv) drawCached(wl,'source-over',1);
+}
+/* ---------- satellite imagery: NASA Blue Marble (public domain), streamed from NASA GIBS ---------- */
+// Tiles are plain lat/long (EPSG:4326): level z tiles are 512 px and span 288/2^z degrees,
+// starting at 180°W, 90°N. Like the relief, each screen row is one stretched strip of a tile.
+const SAT_URL=(z,r,c)=>`https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/BlueMarble_ShadedRelief/default/500m/${z}/${r}/${c}.jpeg`;
+const satTiles=new Map(), sat={key:'',cv:null,pending:'',since:0,t:0,T:null,any:false};
+let satFails=0, satLoads=0;
+function satTile(z,r,c){
+  const key=z+'/'+r+'/'+c; let t=satTiles.get(key);
+  if(t){satTiles.delete(key);satTiles.set(key,t);return t} // keep recently used tiles last
+  t={img:new Image(),ok:false};
+  t.img.crossOrigin='anonymous';
+  t.img.onload=()=>{t.ok=true;satLoads++;sat.key='';redrawSoon()};
+  t.img.onerror=()=>{t.bad=true;satFails++};
+  t.img.src=SAT_URL(z,r,c); satTiles.set(key,t);
+  if(satTiles.size>500){const old=satTiles.keys().next().value;satTiles.delete(old)}
+  return t;
+}
+const satAvailable=()=>!(satFails>12&&satLoads===0); // offline: fall back to the grey relief
+function drawSatellite(){
+  if(!satAvailable()) return false;
+  const key=viewKey();
+  if(settled(sat,key)===false){
+    const k=transform.k,cx=projection([0,0])[0];
+    const cv=sat.cv||document.createElement('canvas'); cv.width=canvas.width; cv.height=canvas.height;
+    const c=cv.getContext('2d'); c.setTransform(DPR,0,0,DPR,0,0); c.imageSmoothingEnabled=true;
+    // pick the level whose pixels are at least as fine as the screen's
+    const need=(projection([180,0])[0]-projection([-180,0])[0])*k*DPR/360;
+    let z=0; while(z<7&&512/(288/2**z)<need) z++;
+    const span=288/2**z,tpx=512/span;
+    let any=false;
+    for(let y=0;y<H;y++){
+      const inv=projection.invert([cx,(y+.5-transform.y)/k]); if(!inv) continue;
+      const phi=inv[1]; if(!(phi>-90&&phi<90)) continue;
+      const x0=transform.x+projection([-180,phi])[0]*k,x1=transform.x+projection([180,phi])[0]*k,sp=x1-x0;
+      const xa=Math.max(0,x0),xb=Math.min(W,x1); if(xb<=xa||sp<=0) continue;
+      const lonA=-180+(xa-x0)/sp*360,lonB=-180+(xb-x0)/sp*360;
+      const r=Math.floor((90-phi)/span);
+      for(let col=Math.floor((lonA+180)/span);-180+col*span<lonB;col++){
+        const tl=-180+col*span,la=Math.max(lonA,tl),lb=Math.min(lonB,tl+span,180); if(lb<=la) continue;
+        const dx0=x0+(la+180)/360*sp,dx1=x0+(lb+180)/360*sp;
+        const t=satTile(z,r,col);
+        if(t.ok){c.drawImage(t.img,(la-tl)*tpx,((90-phi)-r*span)*tpx,(lb-la)*tpx,1,dx0,y,dx1-dx0,1);any=true;continue}
+        // not loaded yet: use the nearest coarser tile that is
+        for(let zz=z-1;zz>=0;zz--){
+          const s2=288/2**zz,p2=512/s2,r2=Math.floor((90-phi)/s2),c2=Math.floor((la+180)/s2),t2=satTiles.get(zz+'/'+r2+'/'+c2);
+          if(t2&&t2.ok){const tl2=-180+c2*s2;c.drawImage(t2.img,(la-tl2)*p2,((90-phi)-r2*s2)*p2,(lb-la)*p2,1,dx0,y,dx1-dx0,1);any=true;break}
+        }
+      }
+    }
+    sat.cv=cv; sat.key=key; sat.T={x:transform.x,y:transform.y,k:transform.k}; sat.any=any;
+  }
+  if(!sat.cv||!sat.any) return false;
+  drawCached(sat,'source-over',1);
+  return true;
+}
+function topFade(){
+  const pl=document.getElementById('plate'),cr=canvas.getBoundingClientRect();
+  const h=Math.max(90,(pl?pl.getBoundingClientRect().bottom-cr.top:110)+30);
+  ctx.save(); ctx.setTransform(DPR,0,0,DPR,0,0);
+  const g=ctx.createLinearGradient(0,0,0,h); g.addColorStop(0,theme.paper); g.addColorStop(.55,theme.paper); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.globalAlpha=.78; ctx.fillStyle=g; ctx.fillRect(0,0,W,h); ctx.restore();
 }
 let soonT=0; function redrawSoon(){if(!soonT)soonT=setTimeout(()=>{soonT=0;(typeof redraw==='function'?redraw:draw)()},30)}
 function fixWinding(geom){
@@ -977,14 +1040,16 @@ function draw(){
   drawWaterlines(k);
   ctx.fillStyle=theme.land; ctx.fill(landPath);
   ctx.save(); ctx.clip(landPath);
-  for(const f of active){ctx.fillStyle=theme.pal[colorIdx[f.n]%8];ctx.globalAlpha=.92;ctx.fill(f.path,'nonzero')}
-  ctx.globalAlpha=1; drawRelief(); drawWater(k);
+  const satel=satOn()&&drawSatellite(); // real terrain under see-through country colours
+  for(const f of active){ctx.fillStyle=theme.pal[colorIdx[f.n]%8];ctx.globalAlpha=satel?.42:.92;ctx.fill(f.path,'nonzero')}
+  ctx.globalAlpha=1; if(!satel) drawRelief(); drawWater(k);
   ctx.globalAlpha=1; ctx.strokeStyle=theme.border; ctx.lineWidth=.6/k; ctx.lineJoin='round';
   for(const f of active) ctx.stroke(f.path);
   if(selectedState>=0){ctx.strokeStyle=theme.accent;ctx.lineWidth=2/k;for(const f of active) if(f.n===selectedState) ctx.stroke(f.path)}
   ctx.restore();
   ctx.strokeStyle=theme.border; ctx.globalAlpha=.7; ctx.lineWidth=.55/k; ctx.stroke(landPath); ctx.globalAlpha=1;
   ctx.strokeStyle=theme.water; ctx.lineWidth=1/k; ctx.stroke(spherePath);
+  if(satel) topFade(); // keeps the year readable over bright ice and desert
   drawOverlay(k);
   if(!(activity&&activity.hideLabels)) drawLabels(); else eventBoxes=[];
   placePins();
@@ -1012,6 +1077,7 @@ function drawLabels(){
   drawTerrain(placed); drawEvents(ev);
 }
 const eventsOn=()=>!activity&&store.settings.events!=='off';
+const satOn=()=>store.settings.mapstyle!=='classic';
 let raf=0; const redraw=()=>{if(!raf)raf=requestAnimationFrame(()=>{raf=0;draw()})};
 const screenOf=ll=>{const p=projection(ll);return [transform.x+p[0]*transform.k,transform.y+p[1]*transform.k]};
 function lonlatAt(e){const r=canvas.getBoundingClientRect();const p=transform.invert([e.clientX-r.left,e.clientY-r.top]);return projection.invert(p)}
@@ -1323,6 +1389,8 @@ function settingsHtml(){
   const st=store.settings, opt=(key,vals)=>'<div class="opt" role="group">'+vals.map(([v,l])=>`<button data-k="${key}" data-v="${v}" aria-pressed="${st[key]===v}">${l}</button>`).join('')+'</div>';
   return '<h3>Text size</h3>'+opt('ts',[['standard','Standard'],['large','Large'],['xl','Extra large']])+
     '<h3>Colours</h3>'+opt('theme',[['auto','Match device'],['light','Light'],['dark','Dark']])+
+    '<h3>Map style</h3>'+opt('mapstyle',[['satellite','Satellite'],['classic','Classic atlas']])+
+    '<p class="small">Satellite pictures of the land from NASA’s Blue Marble (they need an internet connection; without one the map uses the classic look).</p>'+
     '<h3>Events on the map</h3>'+opt('events',[['on','Show'],['off','Hide']])+
     '<p class="small">Battles, treaties, revolutions and other big moments, each with a line to where it happened. Tap one to read about it.</p>'+
     '<h3>Motion</h3>'+opt('motion',[['auto','Match device'],['reduce','Reduce motion']])+
