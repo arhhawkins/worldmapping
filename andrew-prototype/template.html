@@ -274,7 +274,7 @@ function loadLayers(L){
   if(src.startsWith('data:image')){reliefImg=new Image();reliefImg.onload=()=>{if(typeof redraw==='function')redraw();else draw()};reliefImg.src=src.trim()}
 }
 function buildLayers(){
-  lakesPath=new Path2D(); d3.geoPath(projection,lakesPath)(lakes);
+  lakesPath=new Path2D(); fastShape(lakes,lakesPath);
   riverPaths=[new Path2D(),new Path2D(),new Path2D()];
   for(const r of rivers) d3.geoPath(projection,riverPaths[r.r<=2?0:r.r<=4?1:2])(r.g);
 }
@@ -558,7 +558,7 @@ function drawWaterlines(k){
     const c=cv.getContext('2d'); c.setTransform(DPR*k,0,0,DPR*k,DPR*transform.x,DPR*transform.y);
     c.save(); c.clip(spherePath); c.lineJoin='round';
     const sc=Math.min(1,W/1100)*Math.min(1.6,Math.sqrt(k));
-    const outline=landPath; // the detailed coast, so waterlines never show corners
+    const outline=landFor(k); // follows the coast at the detail being drawn
     for(const [w,a] of [[11,.18],[8,.24],[5.5,.32],[3.2,.45]]){
       c.globalAlpha=a; c.strokeStyle=theme.water; c.lineWidth=w*sc/k; c.stroke(outline);
       c.globalAlpha=1; c.strokeStyle=theme.sea; c.lineWidth=Math.max(.2,(w-1.1)*sc)/k; c.stroke(outline);
@@ -678,28 +678,88 @@ function drawCoastBleed(alpha){
     c.globalCompositeOperation='destination-out'; c.fillStyle='#000';
     for(const f of active) c.fill(f.path,'nonzero');      // only the empty strips, never on top of a country
     c.globalCompositeOperation='destination-in'; c.strokeStyle='#000'; c.lineWidth=2*w;
-    c.stroke(landPath);                                    // and only near the real coast
+    c.stroke(landFor(k));                                  // and only near the real coast
     bleed.cv=cv; bleed.key=key; bleed.T={x:transform.x,y:transform.y,k:transform.k};
   }
   if(bleed.cv) drawCached(bleed,'source-over',alpha);
 }
-const frame={cv:null,T:null,last:'',t:0,timer:0};
+// While the map pans or zooms, the last full frame slides and scales instead of being redrawn;
+// the full redraw comes once it has been still for a moment. The frame is copied once per gesture.
+const frame={cv:null,T:null,last:'',timer:0,dirty:false};
 function quickFrame(){
-  const key=transform.x.toFixed(2)+','+transform.y.toFixed(2)+','+transform.k.toFixed(5),now=performance.now();
-  if(key===frame.last) return false;
-  const moving=now-frame.t<220; frame.last=key; frame.t=now;
-  if(!moving||!frame.cv) return false;
-  clearTimeout(frame.timer); frame.timer=setTimeout(()=>{frame.t=0;frame.last='';draw()},200);
+  const key=transform.x.toFixed(2)+','+transform.y.toFixed(2)+','+transform.k.toFixed(5);
+  if(key===frame.last||!frame.T) return false;
+  if(frame.dirty){
+    const cv=frame.cv||(frame.cv=document.createElement('canvas'));
+    if(cv.width!==canvas.width||cv.height!==canvas.height){cv.width=canvas.width;cv.height=canvas.height}
+    const c=cv.getContext('2d'); c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,cv.width,cv.height); c.drawImage(canvas,0,0);
+    frame.dirty=false;
+  }
+  clearTimeout(frame.timer); frame.timer=setTimeout(()=>{frame.last=key2();draw()},200);
   const T=frame.T,s=transform.k/T.k;
   ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle=theme.paper; ctx.fillRect(0,0,canvas.width,canvas.height);
   ctx.setTransform(DPR*s,0,0,DPR*s,DPR*(transform.x-T.x*s),DPR*(transform.y-T.y*s));
   ctx.drawImage(frame.cv,0,0,W,H); return true;
 }
-function keepFrame(){
-  const cv=frame.cv||(frame.cv=document.createElement('canvas'));
-  if(cv.width!==canvas.width||cv.height!==canvas.height){cv.width=canvas.width;cv.height=canvas.height}
-  const c=cv.getContext('2d'); c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,cv.width,cv.height); c.drawImage(canvas,0,0);
-  frame.T={x:transform.x,y:transform.y,k:transform.k};
+const key2=()=>transform.x.toFixed(2)+','+transform.y.toFixed(2)+','+transform.k.toFixed(5);
+function keepFrame(){frame.T={x:transform.x,y:transform.y,k:transform.k};frame.last=key2();frame.dirty=true}
+/* ---------- fast shapes ---------- */
+// d3's date-line clipping costs about 6 µs a point; fewer than 1% of rings come near the date line,
+// so the rest are projected straight into the path. Area, bounds and the biggest part come out of
+// the same pass (flat maths on projected points), so nothing walks the shape twice.
+function nearDateLine(poly){for(const r of poly)for(const p of r)if(p[0]>179.5||p[0]<-179.5||p[1]<-88)return true;return false}
+function fastShape(geom,path){
+  const g=d3.geoPath(projection,path),gp=d3.geoPath(projection);
+  let area=0,x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity,best=null,ba=-1;
+  for(const poly of geom.coordinates){
+    let pa,cx,cy;
+    if(nearDateLine(poly)){
+      const part={type:'Polygon',coordinates:poly}; g(part);
+      pa=gp.area(part); const b=gp.bounds(part),c=gp.centroid(part);
+      if(isFinite(b[0][0])){x0=Math.min(x0,b[0][0]);y0=Math.min(y0,b[0][1]);x1=Math.max(x1,b[1][0]);y1=Math.max(y1,b[1][1])}
+      cx=c[0];cy=c[1];
+    }else{
+      pa=0;let sx=0,sy=0;
+      for(let ri=0;ri<poly.length;ri++){
+        const r=poly[ri]; let prev=null,first=null,ra=0,rx=0,ry=0;
+        for(const p of r){
+          const q=projection(p); if(!q) continue;
+          if(!first){first=q;path.moveTo(q[0],q[1])}else path.lineTo(q[0],q[1]);
+          if(q[0]<x0)x0=q[0];if(q[0]>x1)x1=q[0];if(q[1]<y0)y0=q[1];if(q[1]>y1)y1=q[1];
+          if(prev){const cr=prev[0]*q[1]-q[0]*prev[1];ra+=cr;rx+=(prev[0]+q[0])*cr;ry+=(prev[1]+q[1])*cr}
+          prev=q;
+        }
+        path.closePath();
+        if(ri===0){pa+=Math.abs(ra)/2;if(ra){sx=rx/(3*ra);sy=ry/(3*ra)}}else pa-=Math.abs(ra)/2; // holes
+      }
+      cx=sx;cy=sy;
+    }
+    area+=pa;
+    if(pa>ba&&isFinite(cx)){ba=pa;best={a:pa,x:cx,y:cy,r:0,poly}}
+  }
+  return {area,bb:[[x0,y0],[x1,y1]],lab:best};
+}
+// The coastline at two levels of detail: a lighter one (about 2 km) while zoomed out, where the
+// extra points can't be seen anyway, and the full one (built when first needed) when zoomed in.
+let landLite=null,landCoarse=null,landFine=null;
+function thinRings(geom,step){
+  const out=[];
+  for(const poly of geom.coordinates){
+    const rings=[];
+    for(let ri=0;ri<poly.length;ri++){
+      const r=poly[ri],o=[r[0]];let last=r[0];
+      for(let i=1;i<r.length-1;i++){const p=r[i];if(Math.abs(p[0]-last[0])+Math.abs(p[1]-last[1])>=step){o.push(p);last=p}}
+      o.push(r[r.length-1]);
+      if(o.length>=4) rings.push(o); else if(ri===0) break; // an island too small to see: skip it, holes and all
+    }
+    if(rings.length) out.push(rings);
+  }
+  return {type:'MultiPolygon',coordinates:out};
+}
+function landFor(k){
+  if(k<4) return landCoarse;
+  if(!landFine){landFine=new Path2D();fastShape(land,landFine)}
+  return landFine;
 }
 let soonT=0; function redrawSoon(){if(!soonT)soonT=setTimeout(()=>{soonT=0;(typeof redraw==='function'?redraw:draw)()},30)}
 // rewind so d3's spherical polygons read as small areas (exterior clockwise in d3's convention)
@@ -738,18 +798,16 @@ function geomOf(f){
 }
 function pathOf(f){
   if(!f.path){
-    const g=geomOf(f), p=new Path2D();
-    d3.geoPath(projection,p)(g); f.path=p;
-    const gp=d3.geoPath(projection);
-    f.area=gp.area(g);
-    // label anchor: the point deepest inside the largest part
-    f.bb=gp.bounds(g); f.lab=biggestPart(g); f.fit=null;
+    const g=geomOf(f), p=new Path2D(), st=fastShape(g,p); f.path=p;
+    // the label spot moves to the point deepest inside the largest part when it's first needed
+    f.area=st.area; f.bb=st.bb; f.lab=st.lab; f.fit=null;
   }
   return f.path;
 }
 let landPath,spherePath,gratPath;
 function buildBase(){
-  landPath=new Path2D(); d3.geoPath(projection,landPath)(land);
+  if(!landLite) landLite=thinRings(land,.02);
+  landCoarse=new Path2D(); fastShape(landLite,landCoarse); landFine=null; landPath=landCoarse;
   spherePath=new Path2D(); d3.geoPath(projection,spherePath)(sphere);
   gratPath=new Path2D(); d3.geoPath(projection,gratPath)(grat);
   buildLayers();
@@ -760,6 +818,7 @@ function resize(){
   canvas.width=Math.round(W*DPR); canvas.height=Math.round(H*DPR);
   projection=d3.geoNaturalEarth1().fitExtent([[12,12],[W-12,H-12]],sphere);
   feats.forEach(f=>{f.path=null;f.lab=null;f.hr=null;f.fit=null});
+  frame.T=null; // a new size: no sliding the old frame
   buildBase(); zoom.translateExtent([[-W*0.5,-H*0.5],[W*1.5,H*1.5]]);
   if(first){
     first=false;
@@ -795,9 +854,9 @@ function draw(){
   ctx.strokeStyle=theme.water; ctx.globalAlpha=.35; ctx.lineWidth=.5/k; ctx.stroke(gratPath); ctx.globalAlpha=1;
   ctx.restore();
   drawWaterlines(k);
-  ctx.fillStyle=theme.land; ctx.fill(landPath);
+  const LP=landFor(k); ctx.fillStyle=theme.land; ctx.fill(LP);
   // states, clipped to land so ragged simplified edges stay on shore
-  ctx.save(); ctx.clip(landPath);
+  ctx.save(); ctx.clip(LP);
   const satel=satOn()&&drawSatellite(); // real terrain under see-through country colours
   drawCoastBleed(satel?.42:.92);
   for(const f of active){
@@ -811,7 +870,7 @@ function draw(){
   if(selected>=0){ctx.strokeStyle=theme.accent;ctx.lineWidth=2/k;for(const f of active) if(f.n===selected) ctx.stroke(f.path)}
   ctx.restore();
   // coastline
-  ctx.strokeStyle=theme.border; ctx.globalAlpha=.7; ctx.lineWidth=.55/k; ctx.stroke(landPath); ctx.globalAlpha=1;
+  ctx.strokeStyle=theme.border; ctx.globalAlpha=.7; ctx.lineWidth=.55/k; ctx.stroke(LP); ctx.globalAlpha=1;
   ctx.strokeStyle=theme.water; ctx.lineWidth=1/k; ctx.stroke(spherePath);
   if(satel) topFade(); // keeps the year readable over bright ice and desert
   drawLabels();
